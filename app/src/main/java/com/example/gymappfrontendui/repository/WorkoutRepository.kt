@@ -10,8 +10,8 @@ import com.example.gymappfrontendui.db.entity.Workout
 import com.example.gymappfrontendui.db.entity.WorkoutExercise
 import com.example.gymappfrontendui.db.relationships.WorkoutExerciseWithSets
 import com.example.gymappfrontendui.db.relationships.WorkoutWithWorkoutExercises
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flatMapLatest
 
 
 class WorkoutRepository(context: Context) {
@@ -91,14 +91,12 @@ class WorkoutRepository(context: Context) {
     fun getWorkoutById(id: Int): Flow<Workout> {
         return workoutDao.getWorkoutById(id)
     }
-
-    fun getAvailableWorkouts(): Flow<List<Workout>> = flow {
-        userDao.getLoggedInUserIdFlow().collect { loggedInUserId ->
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getAvailableWorkouts(): Flow<List<Workout>>{
+        return userDao.getLoggedInUserIdFlow().flatMapLatest { loggedInUserId ->
             val userId = loggedInUserId ?: userDao.getGuestUserId()
-            val workout = workoutDao.getAvailableWorkouts(userId).firstOrNull() ?: emptyList()
-            emit(workout)
+            workoutDao.getAvailableWorkouts(userId)
         }
-
     }
 
     fun getWorkoutWithExercisesById(id: Int): Flow<WorkoutWithWorkoutExercises> {
@@ -106,13 +104,13 @@ class WorkoutRepository(context: Context) {
     }
 
 
-    fun getAvailableWorkoutsWithExercises(): Flow<List<WorkoutWithWorkoutExercises>> = flow{
-        userDao.getLoggedInUserIdFlow().collect { loggedInUserId ->
-            val userId = loggedInUserId ?: userDao.getGuestUserId()
-            val workout = workoutDao.getAvailableWorkoutsWithExercises(userId).firstOrNull() ?: emptyList()
-            emit(workout)
-        }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getAvailableWorkoutsWithExercises(): Flow<List<WorkoutWithWorkoutExercises>> {
+        return userDao.getLoggedInUserIdFlow().flatMapLatest { loggedInUserId ->
+            val userId = loggedInUserId ?: userDao.getGuestUserId()
+            workoutDao.getAvailableWorkoutsWithExercises(userId)
+        }
     }
 
     suspend fun insertWorkoutExercise(workoutExercise: WorkoutExercise): Long {

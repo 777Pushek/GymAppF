@@ -10,11 +10,9 @@ import com.example.gymappfrontendui.db.entity.WorkoutTemplate
 import com.example.gymappfrontendui.db.entity.WorkoutTemplateExercise
 import com.example.gymappfrontendui.db.relationships.WorkoutTemplateWithExercises
 import com.example.gymappfrontendui.db.relationships.WorkoutTemplateWithWorkouts
-import com.example.gymappfrontendui.db.relationships.WorkoutWithWorkoutExercises
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
+
 
 
 class WorkoutTemplateRepository(context: Context) {
@@ -96,13 +94,12 @@ class WorkoutTemplateRepository(context: Context) {
         return workoutTemplateDao.getWorkoutTemplateById(id)
     }
 
-    fun getAvailableWorkoutTemplates(): Flow<List<WorkoutTemplate>> = flow{
-        userDao.getLoggedInUserIdFlow().collect { loggedInUserId ->
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getAvailableWorkoutTemplates(): Flow<List<WorkoutTemplate>> {
+        return userDao.getLoggedInUserIdFlow().flatMapLatest { loggedInUserId ->
             val userId = userDao.getLoggedInUserId() ?: userDao.getGuestUserId()
-            val template = workoutTemplateDao.getAvailableWorkoutTemplates(userId).firstOrNull() ?: emptyList()
-            emit(template)
+            workoutTemplateDao.getAvailableWorkoutTemplates(userId)
         }
-
     }
 
     fun getTemplateWithExercises(id: Int): Flow<WorkoutTemplateWithExercises> {
@@ -112,23 +109,18 @@ class WorkoutTemplateRepository(context: Context) {
     fun getTemplateWithWorkouts(id: Int): Flow<WorkoutTemplateWithWorkouts> {
         return workoutTemplateDao.getTemplateWithWorkouts(id)
     }
-
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun getAvailableTemplatesWithExercises(): Flow<List<WorkoutTemplateWithExercises>> {
         return userDao.getLoggedInUserIdFlow().flatMapLatest { loggedInUserId ->
             val userId = loggedInUserId ?: userDao.getGuestUserId()
-            if (userId == null) {
-                flowOf(emptyList())
-            } else {
-                workoutTemplateDao.getAvailableTemplatesWithExercises(userId)
-            }
+            workoutTemplateDao.getAvailableTemplatesWithExercises(userId)
         }
     }
-
-    fun getAvailableTemplatesWithWorkouts(): Flow<List<WorkoutTemplateWithWorkouts>> = flow{
-        userDao.getLoggedInUserIdFlow().collect { loggedInUserId ->
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getAvailableTemplatesWithWorkouts(): Flow<List<WorkoutTemplateWithWorkouts>> {
+        return userDao.getLoggedInUserIdFlow().flatMapLatest { loggedInUserId ->
             val userId = userDao.getLoggedInUserId() ?: userDao.getGuestUserId()
-            val template = workoutTemplateDao.getAvailableTemplatesWithWorkouts(userId).firstOrNull() ?: emptyList()
-            emit(template)
+            workoutTemplateDao.getAvailableTemplatesWithWorkouts(userId)
         }
 
     }

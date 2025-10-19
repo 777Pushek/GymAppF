@@ -5,7 +5,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import com.example.gymappfrontendui.db.AppDb
-import com.example.gymappfrontendui.db.dao.MuscleGroupDao
 import com.example.gymappfrontendui.db.entity.MuscleGroup
 import com.example.gymappfrontendui.db.relationships.MuscleGroupWithExercises
 

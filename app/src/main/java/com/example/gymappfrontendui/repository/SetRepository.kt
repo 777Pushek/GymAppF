@@ -5,7 +5,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import com.example.gymappfrontendui.db.AppDb
-import com.example.gymappfrontendui.db.dao.SetDao
 import com.example.gymappfrontendui.db.entity.Set
 
 class SetRepository(context: Context) {

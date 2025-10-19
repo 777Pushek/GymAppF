@@ -15,7 +15,6 @@ import com.example.gymappfrontendui.db.relationships.UserWithBodyMeasurements
 import com.example.gymappfrontendui.db.relationships.UserWithExercises
 import com.example.gymappfrontendui.db.relationships.UserWithExercisesAndMuscleGroups
 import com.example.gymappfrontendui.db.relationships.UserWithExercisesAndSets
-import com.example.gymappfrontendui.db.relationships.UserWithSyncQueues
 import com.example.gymappfrontendui.db.relationships.UserWithWorkoutTemplates
 import com.example.gymappfrontendui.db.relationships.UserWithWorkouts
 import com.example.gymappfrontendui.network.ApiClient
@@ -119,7 +118,7 @@ class UserRepository(context: Context){
     }
     suspend fun changeUserName(username: String): Boolean{
         return try {
-            val response = api.changeUserName(ChangeUsernameRequest(
+                api.changeUserName(ChangeUsernameRequest(
                 username = username
             ))
             val user = userDao.getLoggedInUser()
