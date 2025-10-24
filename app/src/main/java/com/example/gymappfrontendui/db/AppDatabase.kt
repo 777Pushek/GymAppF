@@ -12,9 +12,11 @@ import com.example.gymappfrontendui.db.dao.BodyMeasurementDao
 import com.example.gymappfrontendui.db.dao.ExerciseDao
 import com.example.gymappfrontendui.db.dao.ExerciseMuscleGroupDao
 import com.example.gymappfrontendui.db.dao.MuscleGroupDao
+import com.example.gymappfrontendui.db.dao.ScheduledWorkoutDao
 import com.example.gymappfrontendui.db.dao.SetDao
 import com.example.gymappfrontendui.db.dao.SyncQueueDao
 import com.example.gymappfrontendui.db.dao.UserDao
+import com.example.gymappfrontendui.db.dao.WeekScheduleDao
 import com.example.gymappfrontendui.db.dao.WorkoutDao
 import com.example.gymappfrontendui.db.dao.WorkoutExerciseDao
 import com.example.gymappfrontendui.db.dao.WorkoutTemplateDao
@@ -23,9 +25,11 @@ import com.example.gymappfrontendui.db.entity.BodyMeasurement
 import com.example.gymappfrontendui.db.entity.Exercise
 import com.example.gymappfrontendui.db.entity.ExerciseMuscleGroup
 import com.example.gymappfrontendui.db.entity.MuscleGroup
+import com.example.gymappfrontendui.db.entity.ScheduledWorkout
 import com.example.gymappfrontendui.db.entity.Set
 import com.example.gymappfrontendui.db.entity.SyncQueue
 import com.example.gymappfrontendui.db.entity.User
+import com.example.gymappfrontendui.db.entity.WeekSchedule
 import com.example.gymappfrontendui.db.entity.Workout
 import com.example.gymappfrontendui.db.entity.WorkoutExercise
 import com.example.gymappfrontendui.db.entity.WorkoutTemplate
@@ -43,7 +47,9 @@ import com.example.gymappfrontendui.db.entity.WorkoutTemplateExercise
     WorkoutExercise::class,
     Set::class,
     BodyMeasurement::class,
-    SyncQueue::class
+    SyncQueue::class,
+    WeekSchedule::class,
+    ScheduledWorkout::class
 ], version = 1)
 abstract class AppDatabase: RoomDatabase() {
     abstract fun userDao(): UserDao
@@ -57,6 +63,9 @@ abstract class AppDatabase: RoomDatabase() {
     abstract fun setDao(): SetDao
     abstract fun bodyMeasurementDao(): BodyMeasurementDao
     abstract fun syncQueueDao(): SyncQueueDao
+    abstract fun weekScheduleDao(): WeekScheduleDao
+    abstract fun scheduledWorkoutDao(): ScheduledWorkoutDao
+
 
 }
 object AppDb{

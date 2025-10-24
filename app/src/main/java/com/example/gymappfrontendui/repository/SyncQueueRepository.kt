@@ -12,6 +12,7 @@ import com.example.gymappfrontendui.db.entity.Exercise
 import com.example.gymappfrontendui.db.entity.ExerciseMuscleGroup
 import com.example.gymappfrontendui.db.entity.Set
 import com.example.gymappfrontendui.db.entity.SyncQueue
+import com.example.gymappfrontendui.db.entity.WeekSchedule
 import com.example.gymappfrontendui.db.entity.Workout
 import com.example.gymappfrontendui.db.entity.WorkoutExercise
 import com.example.gymappfrontendui.db.entity.WorkoutTemplate
@@ -19,7 +20,9 @@ import com.example.gymappfrontendui.db.entity.WorkoutTemplateExercise
 import com.example.gymappfrontendui.network.ApiClient
 import com.example.gymappfrontendui.network.dto.reguest.BodyMeasurementRequest
 import com.example.gymappfrontendui.network.dto.reguest.ExerciseRequest
+import com.example.gymappfrontendui.network.dto.reguest.ScheduledWorkoutsRequest
 import com.example.gymappfrontendui.network.dto.reguest.SetRequest
+import com.example.gymappfrontendui.network.dto.reguest.WeekScheduleRequest
 import com.example.gymappfrontendui.network.dto.reguest.WorkoutExerciseRequest
 import com.example.gymappfrontendui.network.dto.reguest.WorkoutRequest
 import com.example.gymappfrontendui.network.dto.reguest.WorkoutTemplatesRequest
@@ -37,6 +40,9 @@ class SyncQueueRepository(context: Context) {
     private val workoutExerciseDao = db.workoutExerciseDao()
     private val workoutTemplateDao = db.workoutTemplateDao()
     private val workoutTemplateExerciseDao = db.workoutTemplateExerciseDao()
+    private val weekScheduleDao = db.weekScheduleDao()
+    private val scheduledWorkoutDao = db.scheduledWorkoutDao()
+
 
     private val setDao = db.setDao()
     private val api = ApiClient.create(context)
@@ -67,8 +73,12 @@ class SyncQueueRepository(context: Context) {
     }
 
     private suspend fun assignSyncQueueToUser() {
-       // Mikołaj spytaj użytkownika czy chce do danego konta przypisać zmiany na gościu
+        // Mikołaj spytaj użytkownika czy chce do danego konta przypisać zmiany na gościu
         val userId = userDao.getLoggedInUserId()
+        if (userId == null) {
+            Log.w("SyncQueueRepository", "No logged-in user to assign guest queues to")
+            return
+        }
         val guestId = userDao.getGuestUserId()
         val syncQueue = syncQueueDao.getSyncQueuesByUserId(guestId)
 
@@ -114,6 +124,15 @@ class SyncQueueRepository(context: Context) {
                         }
                     }
                 }
+                "week_schedules" -> {
+                    q.localId?.let { id ->
+                        val entity = weekScheduleDao.getWeekScheduleById(id).firstOrNull()
+                        if (entity != null && entity.userId == guestId) {
+                            weekScheduleDao.updateWeekSchedule(entity.copy(userId = userId))
+                            Log.d("SyncRepository", "Assigned userId=$userId to WeekSchedule localId=$id")
+                        }
+                    }
+                }
 
                 else -> {
                     Log.w("SyncRepository", "Unknown table in SyncQueue: ${q.tableName}")
@@ -130,10 +149,47 @@ class SyncQueueRepository(context: Context) {
         downloadWorkouts(startDate, endDate)
         downloadWorkoutTemplates(startDate, endDate)
         downloadBodyMeasurements(startDate, endDate)
+        downloadWeekSchedules(startDate, endDate)
 
         userDao.updateLastSync(endDate)
 
     }
+
+    private suspend fun downloadWeekSchedules(startDate: String?, endDate: String) {
+        var offset = 0
+        val limit = 20
+        var hasMore: Boolean
+        val userId = userDao.getLoggedInUserId()
+        val selectedLocalId = userDao.getSelectedWeekScheduleId()
+        val selectedGlobalId = selectedLocalId?.let { weekScheduleDao.getWeekScheduleById(it).firstOrNull()?.globalId }
+
+        do {
+            val response = api.getUserWeekSchedules(offset, limit, startDate, endDate)
+            hasMore = response.hasMore
+
+            for (ws in response.data) {
+                if (ws.deleted) {
+                    if (ws.id == selectedGlobalId) {
+                        userDao.updateSelectedWeekScheduleId(null)
+                    }
+                    weekScheduleDao.deleteWeekScheduleByGlobalId(ws.id)
+                } else {
+                    val entity = WeekSchedule(
+                        globalId = ws.id,
+                        name = ws.name,
+                        userId = userId
+                    )
+                    val localId = weekScheduleDao.insertWeekSchedule(entity).toInt()
+
+                    if (ws.id == selectedGlobalId) {
+                        userDao.updateSelectedWeekScheduleId(localId)
+                    }
+                }
+            }
+            offset += limit
+        } while (hasMore)
+    }
+
     private suspend fun downloadExercises(startDate: String?, endDate: String) {
         var offset = 0
         val limit = 20
@@ -193,26 +249,31 @@ class SyncQueueRepository(context: Context) {
                     )
                     val localWorkoutId = workoutDao.insertWorkout(workoutEntity)
 
-                    // ćwiczenia wewnątrz treningu
                     for (ex in workout.exercises) {
+
+                        val localExerciseId = exerciseDao.getExerciseGlobalIdById(ex.id)
+                        if (localExerciseId == null) {
+                            Log.w("SyncQueueRepository", "Exercise with globalId=${ex.id} not found locally, skipping workout exercise")
+                            continue
+                        }
                         val localWorkoutExerciseId = workoutExerciseDao.insertWorkoutExercise(
                             WorkoutExercise(
                                 position = ex.position,
-                                exerciseId = ex.id,
+                                exerciseId = localExerciseId,
                                 workoutId = localWorkoutId.toInt()
 
                             )
                         )
 
                         ex.sets.forEachIndexed { index, set ->
-                        setDao.insertSet(
-                            Set(
-                                workoutExerciseId = localWorkoutExerciseId.toInt(),
-                                reps = set.reps,
-                                weight = set.weight,
-                                position = index
+                            setDao.insertSet(
+                                Set(
+                                    workoutExerciseId = localWorkoutExerciseId.toInt(),
+                                    reps = set.reps,
+                                    weight = set.weight,
+                                    position = index
+                                )
                             )
-                        )
                         }
 
                     }
@@ -275,11 +336,17 @@ class SyncQueueRepository(context: Context) {
                         userId = userId
                     )
                     val localTemplateId = workoutTemplateDao.insertWorkoutTemplate(workoutTemplate)
-                    template.exercises.forEachIndexed { index, eId ->
+
+                    template.exercises.forEachIndexed { index, eGlobalId ->
+                        val localExerciseId = exerciseDao.getExerciseGlobalIdById(eGlobalId)
+                        if (localExerciseId == null) {
+                            Log.w("SyncQueueRepository", "Template exercise globalId=$eGlobalId not found locally, skipping")
+                            return@forEachIndexed
+                        }
                         workoutTemplateExerciseDao.insertWorkoutTemplateExercise(
                             WorkoutTemplateExercise(
                                 workoutTemplateId = localTemplateId.toInt(),
-                                exerciseId = eId,
+                                exerciseId = localExerciseId,
                                 position = index
                             )
                         )
@@ -294,7 +361,11 @@ class SyncQueueRepository(context: Context) {
 
     suspend fun uploadToServer(initialLastSync: String)= withContext(Dispatchers.IO){
         val userId = userDao.getLoggedInUserId()
-        val syncQueue = syncQueueDao.getSyncQueuesByUserId(userId!!)
+        if (userId == null) {
+            Log.w("SyncQueueRepository", "No logged-in user, skipping upload")
+            return@withContext
+        }
+        val syncQueue = syncQueueDao.getSyncQueuesByUserId(userId)
         var currentLastSync = initialLastSync
 
         for (q in syncQueue){
@@ -304,6 +375,7 @@ class SyncQueueRepository(context: Context) {
                     "body_measurements" -> currentLastSync = syncBodyMeasurement(q, currentLastSync)
                     "workouts" -> currentLastSync = syncWorkout(q, currentLastSync)
                     "workout_templates" -> currentLastSync = syncWorkoutTemplate(q, currentLastSync)
+                    "week_schedules" -> currentLastSync = syncWeekSchedule(q, currentLastSync)
                     else -> Log.w("SyncRepository", "Unknown table: ${q.tableName}")
                 }
             }catch (e:Exception){
@@ -312,6 +384,84 @@ class SyncQueueRepository(context: Context) {
 
         }
     }
+
+    private suspend fun syncWeekSchedule(q: SyncQueue, lastSync: String): String {
+        val selectedLocalId = userDao.getSelectedWeekScheduleId()
+
+        val weekSchedule = q.localId?.let { weekScheduleDao.getWeekScheduleById(it).firstOrNull() }
+        val scheduledWorkout = q.localId?.let { scheduledWorkoutDao.getScheduledWorkoutsForWeekSchedule(it) } ?: emptyList()
+        val scheduledWorkoutRequest = scheduledWorkout.map { sw ->
+            ScheduledWorkoutsRequest(
+                templateId = sw.workoutTemplateId,
+                day = sw.day,
+                time = sw.time
+            )
+        }
+
+        val request = weekSchedule?.let {
+            WeekScheduleRequest(
+                name = it.name,
+                selected = (selectedLocalId == it.weekScheduleId),
+                scheduledWorkouts = scheduledWorkoutRequest
+            )
+        }
+
+        var currentLastSync = lastSync
+        try {
+            when {
+                // Add
+                q.globalId == null && weekSchedule != null -> {
+                    val response = api.addWeekSchedule(
+                        request = request!!,
+                        lastSync = currentLastSync
+                    )
+                    weekSchedule.globalId = response.id
+                    weekScheduleDao.updateWeekSchedule(weekSchedule)
+                    syncQueueDao.deleteSyncQueue(q)
+                    userDao.updateLastSync(response.lastSync)
+                    currentLastSync = response.lastSync
+                    Log.d("SyncRepository", "Add complete")
+                }
+
+                // Update
+                q.globalId != null && weekSchedule != null -> {
+                    val response = api.updateWeekSchedule(
+                        id = q.globalId!!,
+                        request = request!!,
+                        lastSync = currentLastSync,
+                    )
+
+                    weekScheduleDao.updateWeekSchedule(weekSchedule)
+                    syncQueueDao.deleteSyncQueue(q)
+                    userDao.updateLastSync(response.lastSync)
+                    currentLastSync = response.lastSync
+                    Log.d("SyncRepository", "Update complete")
+                }
+
+                // Delete
+                q.globalId != null && weekSchedule == null -> {
+                    val response = api.deleteWeekSchedule(
+                        id = q.globalId!!,
+                        lastSync = currentLastSync
+                    )
+                    syncQueueDao.deleteSyncQueue(q)
+                    userDao.updateLastSync(response.lastSync)
+                    currentLastSync = response.lastSync
+                    Log.d("SyncRepository", "Delete complete")
+                }
+
+                else -> {
+                    Log.w("SyncRepository", "Nothing to sync for week schedule queue: $q")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("SyncRepository", "Week Schedule sync error: ${e.message}")
+        }
+
+        return currentLastSync
+
+    }
+
     private suspend fun syncExercise(q: SyncQueue,lastSync: String): String{
 
         val exercise = q.localId?.let { exerciseDao.getExerciseById(it).firstOrNull() }

@@ -34,6 +34,8 @@ interface ExerciseDao {
     @Query("SELECT * FROM exercises WHERE exercise_id = :id")
     fun getExerciseById(id: Int): Flow<Exercise>
 
+    @Query("SELECT global_id FROM exercises WHERE exercise_id = :id LIMIT 1")
+    fun getExerciseGlobalIdById(id: Int) : Int?
 
     @Query("SELECT * FROM exercises WHERE user_id = :userId OR user_id IS NULL")
     fun getAvailableExercises(userId: Int?): Flow<List<Exercise>>

@@ -16,6 +16,7 @@ import com.example.gymappfrontendui.network.dto.reguest.RegisterRequest
 import com.example.gymappfrontendui.network.dto.reguest.ResetPasswordRequest
 import com.example.gymappfrontendui.network.dto.reguest.VerifyEmailRequest
 import com.example.gymappfrontendui.network.dto.reguest.VerifyResetCodeRequest
+import com.example.gymappfrontendui.network.dto.reguest.WeekScheduleRequest
 import com.example.gymappfrontendui.network.dto.reguest.WorkoutRequest
 import com.example.gymappfrontendui.network.dto.reguest.WorkoutTemplatesRequest
 import com.example.gymappfrontendui.network.dto.response.AddEmailResponse
@@ -28,6 +29,7 @@ import com.example.gymappfrontendui.network.dto.response.DeleteResponse
 import com.example.gymappfrontendui.network.dto.response.ForgotPasswordResponse
 import com.example.gymappfrontendui.network.dto.response.GetBodyMeasurementsResponse
 import com.example.gymappfrontendui.network.dto.response.GetExercisesResponse
+import com.example.gymappfrontendui.network.dto.response.GetWeekSchedulesResponse
 import com.example.gymappfrontendui.network.dto.response.GetWorkoutTemplatesResponse
 import com.example.gymappfrontendui.network.dto.response.GetWorkoutsResponse
 import com.example.gymappfrontendui.network.dto.response.RegisterResponse
@@ -209,6 +211,33 @@ interface ApiService {
         @Query("startDate") startDate: String? = null,
         @Query("endDate") endDate: String
     ): GetWorkoutsResponse
+    //========================================= week schedule =====================================
+    @POST("weekSchedules")
+    suspend fun addWeekSchedule(
+        @Body request: WeekScheduleRequest,
+        @Header("X-Last-Sync") lastSync: String
+    ): AddResponse
+
+    @PUT("weekSchedules/{id}")
+    suspend fun updateWeekSchedule(
+        @Path("id") id: Int,
+        @Body request: WeekScheduleRequest,
+        @Header("X-Last-Sync") lastSync: String
+    ): UpdateResponse
+
+    @DELETE("weekSchedules/{id}")
+    suspend fun deleteWeekSchedule(
+        @Path("id") id: Int,
+        @Header("X-Last-Sync") lastSync: String
+    ): DeleteResponse
+
+    @GET("weekSchedules")
+    suspend fun getUserWeekSchedules(
+        @Query("offset") offset: Int = 0,
+        @Query("limit") limit: Int = 5,
+        @Query("startDate") startDate: String? = null,
+        @Query("endDate") endDate: String
+    ): GetWeekSchedulesResponse
 
 
 

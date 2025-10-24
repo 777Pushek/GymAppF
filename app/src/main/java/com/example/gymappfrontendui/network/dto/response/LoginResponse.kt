@@ -9,6 +9,6 @@ data class LoginResponse(
     val message: String,
     @Json(name = "token")
     val token: String,
-    //@Json(name = "last_sync")
-   // val lastSync: String
+    @Json(name = "last_sync")
+    val lastSync: String
 )

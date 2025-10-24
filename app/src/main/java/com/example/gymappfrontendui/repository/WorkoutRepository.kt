@@ -84,10 +84,6 @@ class WorkoutRepository(context: Context) {
         workoutDao.deleteWorkout(workout)
     }
 
-    suspend fun deleteWorkoutByGlobalId(id: Int) {
-        workoutDao.deleteWorkoutByGlobalId(id)
-    }
-
     fun getWorkoutById(id: Int): Flow<Workout> {
         return workoutDao.getWorkoutById(id)
     }
@@ -102,8 +98,6 @@ class WorkoutRepository(context: Context) {
     fun getWorkoutWithExercisesById(id: Int): Flow<WorkoutWithWorkoutExercises> {
         return workoutDao.getWorkoutWithExercisesById(id)
     }
-
-
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getAvailableWorkoutsWithExercises(): Flow<List<WorkoutWithWorkoutExercises>> {

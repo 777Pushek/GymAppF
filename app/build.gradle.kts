@@ -105,5 +105,7 @@ dependencies {
     implementation("io.github.boguszpawlowski.composecalendar:kotlinx-datetime:1.4.0")
 
     implementation("io.github.ehsannarmani:compose-charts:0.2.0")
+    //worker
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
 
 }
