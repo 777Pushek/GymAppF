@@ -5,10 +5,12 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import com.example.gymappfrontendui.db.entity.Set
-import com.example.gymappfrontendui.db.pojo.WorkoutSetWithDate
+import com.example.gymappfrontendui.db.dto.WorkoutSetWithDate
+import com.example.gymappfrontendui.db.relationships.WorkoutWithWorkoutExerciseAndSets
 
 @Dao
 interface SetDao {
@@ -40,5 +42,9 @@ interface SetDao {
         ORDER BY w.date ASC, s.position ASC
     """)
     fun getWorkoutSetsWithDateForExerciseAndUser(exerciseId: Int, userId: Int): Flow<List<WorkoutSetWithDate>>
+
+    @Transaction
+    @Query("SELECT * FROM workouts WHERE user_id = :userId")
+    fun getWorkoutsWithExercisesAndSetsForUser(userId: Int): Flow<List<WorkoutWithWorkoutExerciseAndSets>>
 
 }

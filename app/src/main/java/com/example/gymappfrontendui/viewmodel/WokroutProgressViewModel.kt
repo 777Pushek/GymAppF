@@ -4,7 +4,7 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.gymappfrontendui.db.pojo.WorkoutSetWithDate
+import com.example.gymappfrontendui.db.dto.WorkoutSetWithDate
 import com.example.gymappfrontendui.db.entity.Exercise
 import com.example.gymappfrontendui.repository.SetRepository
 import com.example.gymappfrontendui.repository.ExerciseRepository

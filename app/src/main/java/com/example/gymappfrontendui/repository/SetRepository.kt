@@ -6,9 +6,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import com.example.gymappfrontendui.db.AppDb
 import com.example.gymappfrontendui.db.entity.Set
-import com.example.gymappfrontendui.db.pojo.WorkoutSetWithDate
+import com.example.gymappfrontendui.db.dto.WorkoutSetWithDate
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 class SetRepository(context: Context) {
     private val db = AppDb.getInstance(context)
@@ -47,8 +48,30 @@ class SetRepository(context: Context) {
             if (userId == null) {
                 flowOf(emptyList())
             } else {
-                setDao.getWorkoutSetsWithDateForExerciseAndUser(exerciseId, userId)
+                getSetsAndWorkoutDateForExerciseAndUser(exerciseId, userId)
             }
         }
     }
+    fun getSetsAndWorkoutDateForExerciseAndUser(exerciseId: Int, userId: Int): Flow<List<WorkoutSetWithDate>> {
+        return setDao.getWorkoutsWithExercisesAndSetsForUser(userId)
+            .map { workoutsWithRelations ->
+                workoutsWithRelations.flatMap { workoutWithRelations ->
+                    val workoutDate = workoutWithRelations.workout.date
+
+                    workoutWithRelations.exercisesWithSets
+                        .filter { it.workoutExercise.exerciseId == exerciseId }
+                        .flatMap { weWithSets ->
+                            weWithSets.sets.map { set ->
+                                WorkoutSetWithDate(
+                                    workoutSet = set,
+                                    workoutDate = workoutDate
+                                )
+                            }
+
+                        }
+                }
+            }
+    }
 }
+
+
