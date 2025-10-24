@@ -22,12 +22,15 @@ import com.example.gymappfrontendui.viewmodel.ExercisesViewModel
 import com.example.gymappfrontendui.viewmodel.WorkoutUiState
 import com.example.gymappfrontendui.viewmodel.WorkoutViewModel
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import com.example.gymappfrontendui.db.relationships.WorkoutTemplateWithExercises
@@ -44,7 +47,6 @@ fun WorkoutScreen(
     modifier: Modifier = Modifier,
     workoutViewModel: WorkoutViewModel = viewModel(),
     exercisesViewModel: ExercisesViewModel = viewModel(),
-
     loginViewModel: LoginRegistryViewModel = viewModel()
 ) {
     val uiState by workoutViewModel.uiState.collectAsState()
@@ -63,7 +65,6 @@ fun WorkoutScreen(
                 },
                 workoutViewModel = workoutViewModel,
                 exercisesViewModel = exercisesViewModel,
-
                 loginViewModel = loginViewModel
             )
         }
@@ -73,12 +74,10 @@ fun WorkoutScreen(
                 modifier = modifier,
                 exercisesViewModel = exercisesViewModel,
                 workoutViewModel = workoutViewModel
-
             )
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StartWorkoutScreen(
@@ -89,7 +88,6 @@ fun StartWorkoutScreen(
     onStartTemplate: (WorkoutTemplateWithExercises) -> Unit,
     workoutViewModel: WorkoutViewModel,
     exercisesViewModel: ExercisesViewModel,
-
     loginViewModel: LoginRegistryViewModel
 ) {
     var selectedTemplate by remember { mutableStateOf<WorkoutTemplateWithExercises?>(null) }
@@ -103,9 +101,9 @@ fun StartWorkoutScreen(
         item {
             Text(
                 text = "Start workout",
-                fontSize = 32.sp,
+                style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -115,17 +113,17 @@ fun StartWorkoutScreen(
                 onClick = onStartEmpty,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Start Empty Workout", fontSize = 18.sp)
+                Text("Start Empty Workout", style = MaterialTheme.typography.bodyLarge)
             }
-            Divider(modifier = Modifier.padding(vertical = 12.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
         }
 
         item {
             Text(
                 text = "Templates",
-                fontSize = 36.sp,
+                style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onBackground,
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -135,11 +133,10 @@ fun StartWorkoutScreen(
                 Text(
                     text = "No pre-made templates found.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
                 )
-                Spacer(modifier = Modifier.height(16.dp))
             }
         } else {
             items(premadeTemplates, key = { "premade_${it.workoutTemplate.workoutTemplateId}" }) { template ->
@@ -152,6 +149,7 @@ fun StartWorkoutScreen(
         }
 
         item {
+            Spacer(modifier = Modifier.height(16.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -159,9 +157,9 @@ fun StartWorkoutScreen(
             ) {
                 Text(
                     text = "My Templates",
-                    fontSize = 36.sp,
+                    style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onBackground,
                 )
                 IconButton(onClick = { showCreateTemplateDialog = true }) {
                     Icon(
@@ -180,11 +178,10 @@ fun StartWorkoutScreen(
                 Text(
                     text = "You haven't created any templates yet.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
                 )
-                Spacer(modifier = Modifier.height(16.dp))
             }
         } else {
             items(userTemplates, key = { "user_${it.workoutTemplate.workoutTemplateId}" }) { template ->
@@ -199,9 +196,9 @@ fun StartWorkoutScreen(
                         }
                         return@rememberSwipeToDismissBoxState false
                     },
-                    positionalThreshold = { it * .25f }
+                    positionalThreshold = { pos -> pos * .25f }
                 )
-                LaunchedEffect(dismissState.currentValue) {
+                LaunchedEffect(template.workoutTemplate.workoutTemplateId, dismissState.currentValue) {
                     if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
                         dismissState.reset()
                     }
@@ -222,7 +219,7 @@ fun StartWorkoutScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(color, shape = RoundedCornerShape(8.dp))
+                                .background(color, shape = RoundedCornerShape(12.dp))
                                 .padding(horizontal = 20.dp),
                             contentAlignment = Alignment.CenterEnd
                         ) {
@@ -259,10 +256,8 @@ fun StartWorkoutScreen(
         val allExercises by exercisesViewModel.getAvailableExercises().collectAsState(initial = emptyList())
         CreateTemplateDialog(
             allExercises = allExercises,
-
             loginViewModel = loginViewModel,
             onDismiss = { showCreateTemplateDialog = false },
-
             onConfirm = { name, exercises, userId ->
                 workoutViewModel.createTemplate(name, exercises, userId)
                 showCreateTemplateDialog = false
@@ -270,6 +265,7 @@ fun StartWorkoutScreen(
         )
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TemplateCard(
@@ -280,9 +276,11 @@ fun TemplateCard(
         modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -293,7 +291,8 @@ fun TemplateCard(
                 Text(
                     text = template.workoutTemplate.name,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Icon(
                     imageVector = Icons.Default.List,
@@ -303,35 +302,44 @@ fun TemplateCard(
             }
             Spacer(modifier = Modifier.height(12.dp))
 
-            Column(modifier = Modifier.padding(start = 8.dp)) {
-                val sortedExercises = template.exercises
-                    .sortedBy { it.workoutTemplateExercise.position }
-                    .take(3)
+            val sortedExercises = template.exercises
+                .sortedBy { it.workoutTemplateExercise.position }
+                .take(3)
 
-                sortedExercises.forEach { detail ->
-                    Row {
+            if (sortedExercises.isNotEmpty()) {
+                Column(modifier = Modifier.padding(start = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    sortedExercises.forEach { detail ->
+                        Row {
+                            Text(
+                                text = "• ",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = detail.exerciseWithGroups.exercise.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    if (template.exercises.size > 3) {
                         Text(
-                            text = "• ",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray
-                        )
-                        Text(
-                            text = detail.exerciseWithGroups.exercise.name,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            text = "• ...and more",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
-
-                if (template.exercises.size > 3) {
-                    Text(
-                        text = "• ...and more",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
-                }
+            } else {
+                Text(
+                    text = "No exercises in this template.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
             }
         }
     }
@@ -435,41 +443,46 @@ fun WorkoutInProgressScreen(
 ) {
     var showExerciseSelection by remember { mutableStateOf(false) }
 
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp)
+            .padding(horizontal = 16.dp)
     ) {
-        itemsIndexed(state.exercises, key = { _, item -> item.exercise.exerciseId }) { index, workoutExercise ->
-            ActiveExerciseCard(
-                workoutExercise = workoutExercise,
-                onAddSet = { workoutViewModel.addSetToExercise(workoutExercise.exercise.exerciseId) },
-                onRemoveSet = { set -> workoutViewModel.removeSetFromExercise(workoutExercise.exercise.exerciseId, set) },
-                onRemoveExercise = { workoutViewModel.removeExerciseFromWorkout(workoutExercise.exercise.exerciseId) }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        item {
-            Button(
-                onClick = { showExerciseSelection = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Add Exercise")
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(
-                onClick = { workoutViewModel.cancelWorkout() },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            itemsIndexed(state.exercises, key = { _, item -> item.exercise.exerciseId }) { index, workoutExercise: ActiveWorkoutExercise ->
+                ActiveExerciseCard(
+                    workoutExercise = workoutExercise,
+                    onAddSet = { workoutViewModel.addSetToExercise(workoutExercise.exercise.exerciseId) },
+                    onRemoveSet = { set -> workoutViewModel.removeSetFromExercise(workoutExercise.exercise.exerciseId, set) },
+                    onRemoveExercise = { workoutViewModel.removeExerciseFromWorkout(workoutExercise.exercise.exerciseId) }
                 )
-            ) {
-                Text("Cancel Workout")
+            }
+
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = { showExerciseSelection = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                        Text("Add Exercise")
+                    }
+                    Button(
+                        onClick = { workoutViewModel.cancelWorkout() },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) {
+                        Text("Cancel Workout")
+                    }
+                }
             }
         }
     }
@@ -497,7 +510,12 @@ fun ActiveExerciseCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row (
@@ -506,7 +524,12 @@ fun ActiveExerciseCard(
                 verticalAlignment = Alignment.CenterVertically
             )
             {
-                Text(workoutExercise.exercise.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text(
+                    workoutExercise.exercise.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete Exercise",
@@ -520,66 +543,75 @@ fun ActiveExerciseCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Set", modifier = Modifier.weight(0.5f), fontWeight = FontWeight.SemiBold)
-                Text("Prev", modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
-                Text("Weight", modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
-                Text("Reps", modifier = Modifier.weight(1F), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
-                Spacer(modifier = Modifier.weight(0.5f))
+                val headerColor = MaterialTheme.colorScheme.onSurfaceVariant
+                Text("Set", modifier = Modifier.weight(0.5f), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = headerColor)
+                Text("Prev", modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = headerColor)
+                Text("Weight", modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = headerColor)
+                Text("Reps", modifier = Modifier.weight(1F), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = headerColor)
+                Text("✓", modifier = Modifier.weight(0.5f), fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, color = headerColor)
             }
-            Divider(modifier = Modifier.padding(vertical = 4.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 4.dp),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
 
-            workoutExercise.sets.forEach { set ->
-                val dismissState = rememberSwipeToDismissBoxState(
-                    confirmValueChange = {
-                        if (it == SwipeToDismissBoxValue.EndToStart) {
-                            onRemoveSet(set)
-                            return@rememberSwipeToDismissBoxState true
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                workoutExercise.sets.forEach { set ->
+                    val dismissState = rememberSwipeToDismissBoxState(
+                        confirmValueChange = {
+                            if (it == SwipeToDismissBoxValue.EndToStart) {
+                                onRemoveSet(set)
+                                return@rememberSwipeToDismissBoxState true
+                            }
+                            return@rememberSwipeToDismissBoxState false
+                        },
+                        positionalThreshold = { pos -> pos * .25f }
+                    )
+
+                    LaunchedEffect(set.setId, dismissState.currentValue) {
+                        if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+                            dismissState.reset()
                         }
-                        return@rememberSwipeToDismissBoxState false
-                    },
-                    positionalThreshold = { it * .25f }
-                )
-
-                LaunchedEffect(dismissState.currentValue) {
-                    if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
-                        dismissState.reset()
                     }
-                }
 
-                SwipeToDismissBox(
-                    state = dismissState,
-                    enableDismissFromStartToEnd = false,
-                    enableDismissFromEndToStart = true,
-                    backgroundContent = {
-                        val color by animateColorAsState(
-                            targetValue = when(dismissState.targetValue) {
-                                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                                else -> Color.Transparent
-                            },
-                            label = "background color animation"
-                        )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(color, shape = RoundedCornerShape(8.dp))
-                                .padding(horizontal = 20.dp),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            Icon(
-                                Icons.Default.Delete,
-                                contentDescription = "Delete Icon",
-                                tint = MaterialTheme.colorScheme.onErrorContainer
+                    SwipeToDismissBox(
+                        state = dismissState,
+                        enableDismissFromStartToEnd = false,
+                        enableDismissFromEndToStart = true,
+                        backgroundContent = {
+                            val color by animateColorAsState(
+                                targetValue = when(dismissState.targetValue) {
+                                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                                    else -> Color.Transparent
+                                },
+                                label = "background color animation set workout"
                             )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(color, shape = RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 20.dp),
+                                contentAlignment = Alignment.CenterEnd
+                            ) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = "Delete Icon",
+                                    tint = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
                         }
+                    ) {
+                        WorkoutSetRow(set = set)
                     }
-                ) {
-                    WorkoutSetRow(set = set)
                 }
-                Spacer(modifier = Modifier.height(8.dp))
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = onAddSet, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            Button(
+                onClick = onAddSet,
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 16.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                 Text("Add Set")
             }
         }
@@ -588,13 +620,17 @@ fun ActiveExerciseCard(
 
 @Composable
 fun WorkoutSetRow(set: ActiveWorkoutSet) {
-    var weight by remember { mutableStateOf(set.weight) }
-    var reps by remember { mutableStateOf(set.reps) }
-    var isCompleted by remember { mutableStateOf(set.isCompleted) }
+    var weight by remember(set.setId) { mutableStateOf(set.weight) }
+    var reps by remember(set.setId) { mutableStateOf(set.reps) }
+    var isCompleted by remember(set.setId) { mutableStateOf(set.isCompleted) }
+
+    LaunchedEffect(weight) { if (set.weight != weight) set.weight = weight }
+    LaunchedEffect(reps) { if (set.reps != reps) set.reps = reps }
+    LaunchedEffect(isCompleted) { if (set.isCompleted != isCompleted) set.isCompleted = isCompleted }
 
     val rowColor by animateColorAsState(
-        targetValue = if (isCompleted) Color(0xFFC8E6C9) else MaterialTheme.colorScheme.surface,
-        label = "row color animation"
+        targetValue = if (isCompleted) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f) else MaterialTheme.colorScheme.surfaceVariant,
+        label = "row color animation workout"
     )
 
     Row(
@@ -607,38 +643,136 @@ fun WorkoutSetRow(set: ActiveWorkoutSet) {
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(set.setNumber.toString(), modifier = Modifier.weight(0.5f), textAlign = TextAlign.Center)
-        Text(set.previousPerformance, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
+        Text(
+            text = set.previousPerformance.ifBlank { "-" },
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
         OutlinedTextField(
             value = weight,
-            onValueChange = {
-                weight = it
-                set.weight = it
-            },
-            modifier = Modifier.weight(1f),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true
+            onValueChange = { weight = it.filter { char -> char.isDigit() || char == '.' } },
+            modifier = Modifier.weight(1f).height(56.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            singleLine = true,
+            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+            shape = RoundedCornerShape(8.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface
+            )
         )
         OutlinedTextField(
             value = reps,
-            onValueChange = {
-                reps = it
-                set.reps = it
-            },
-            modifier = Modifier.weight(1f),
+            onValueChange = { reps = it.filter { char -> char.isDigit() } },
+            modifier = Modifier.weight(1f).height(56.dp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true
+            singleLine = true,
+            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+            shape = RoundedCornerShape(8.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface
+            )
         )
         Checkbox(
             checked = isCompleted,
-            onCheckedChange = {
-                isCompleted = it
-                set.isCompleted = it
-            },
-            modifier = Modifier.weight(0.5f)
+            onCheckedChange = { isCompleted = it },
+            modifier = Modifier.weight(0.5f).padding(0.dp)
         )
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExerciseSelectionList(
+    modifier: Modifier = Modifier,
+    allExercises: List<Exercise>,
+    initiallySelected: List<Exercise>,
+    onSelectionChanged: (List<Exercise>) -> Unit
+) {
+    var searchQuery by remember { mutableStateOf("") }
+    val selectedExercises = remember { mutableStateListOf<Exercise>().also { it.addAll(initiallySelected) } }
+
+    LaunchedEffect(selectedExercises.size) {
+        onSelectionChanged(selectedExercises.toList())
+    }
+
+    val filteredExercises = remember(searchQuery, allExercises) {
+        if (searchQuery.isBlank()) {
+            allExercises
+        } else {
+            allExercises.filter {
+                it.name.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }.sortedBy { it.name.lowercase() }
+
+    Column(modifier = modifier) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            placeholder = { Text("Search exercise...") },
+            leadingIcon = {
+                Icon(Icons.Default.Search, contentDescription = "Search")
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(Icons.Filled.Close, contentDescription = "Clear search")
+                    }
+                }
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            if (filteredExercises.isEmpty()) {
+                item {
+                    Text(
+                        text = "No exercises found.",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                items(filteredExercises, key = { it.exerciseId }) { exercise ->
+                    val isSelected = selectedExercises.contains(exercise)
+                    ListItem(
+                        headlineContent = { Text(exercise.name) },
+                        modifier = Modifier.clickable {
+                            if (isSelected) {
+                                selectedExercises.remove(exercise)
+                            } else {
+                                selectedExercises.add(exercise)
+                            }
+                        },
+                        leadingContent = {
+                            Checkbox(
+                                checked = isSelected,
+                                onCheckedChange = null
+                            )
+                        },
+                        colors = ListItemDefaults.colors(
+                            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) else Color.Transparent
+                        )
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 fun SelectExercisesDialog(
@@ -646,36 +780,28 @@ fun SelectExercisesDialog(
     onDismiss: () -> Unit,
     onConfirm: (List<Exercise>) -> Unit
 ) {
-    val selectedExercises = remember { mutableStateListOf<Exercise>() }
+    var currentSelection by remember { mutableStateOf<List<Exercise>>(emptyList()) }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(modifier = Modifier.fillMaxWidth(0.95f).fillMaxHeight(0.8f)) {
             Column {
-                Text("Select Exercises", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(16.dp))
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(allExercises, key = { it.exerciseId }) { exercise ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    if (selectedExercises.contains(exercise)) {
-                                        selectedExercises.remove(exercise)
-                                    } else {
-                                        selectedExercises.add(exercise)
-                                    }
-                                }
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = selectedExercises.contains(exercise),
-                                onCheckedChange = null
-                            )
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Text(exercise.name, style = MaterialTheme.typography.bodyLarge)
-                        }
+                Text(
+                    "Select Exercises",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(16.dp)
+                )
+
+                ExerciseSelectionList(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
+                    allExercises = allExercises,
+                    initiallySelected = emptyList(),
+                    onSelectionChanged = { updatedSelection ->
+                        currentSelection = updatedSelection
                     }
-                }
+                )
+
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalArrangement = Arrangement.End
@@ -684,7 +810,10 @@ fun SelectExercisesDialog(
                         Text("Cancel")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = { onConfirm(selectedExercises.toList()) }) {
+                    Button(
+                        onClick = { onConfirm(currentSelection) },
+                        enabled = currentSelection.isNotEmpty()
+                    ) {
                         Text("Add")
                     }
                 }
@@ -696,20 +825,17 @@ fun SelectExercisesDialog(
 @Composable
 fun CreateTemplateDialog(
     allExercises: List<Exercise>,
-
     loginViewModel: LoginRegistryViewModel,
     onDismiss: () -> Unit,
-
     onConfirm: (String, List<Exercise>, Int?) -> Unit
 ) {
     var templateName by remember { mutableStateOf("") }
-    val selectedExercises = remember { mutableStateListOf<Exercise>() }
-
+    var currentSelection by remember { mutableStateOf<List<Exercise>>(emptyList()) }
     val scope = rememberCoroutineScope()
 
     val isFormValid by remember {
         derivedStateOf {
-            templateName.isNotBlank() && selectedExercises.isNotEmpty()
+            templateName.isNotBlank() && currentSelection.isNotEmpty()
         }
     }
 
@@ -730,39 +856,25 @@ fun CreateTemplateDialog(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     singleLine = true,
-                    isError = templateName.isBlank()
+                    isError = templateName.isBlank() && currentSelection.isEmpty()
                 )
 
                 Text(
                     "Select Exercises",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 0.dp)
                 )
 
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(allExercises, key = { it.exerciseId }) { exercise ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    if (selectedExercises.contains(exercise)) {
-                                        selectedExercises.remove(exercise)
-                                    } else {
-                                        selectedExercises.add(exercise)
-                                    }
-                                }
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = selectedExercises.contains(exercise),
-                                onCheckedChange = null
-                            )
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Text(exercise.name, style = MaterialTheme.typography.bodyLarge)
-                        }
+                ExerciseSelectionList(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
+                    allExercises = allExercises,
+                    initiallySelected = emptyList(),
+                    onSelectionChanged = { updatedSelection ->
+                        currentSelection = updatedSelection
                     }
-                }
+                )
 
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -774,12 +886,9 @@ fun CreateTemplateDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
-
                             scope.launch {
-
                                 val uId = loginViewModel.getLoggedInUserID() ?: loginViewModel.getGuestUserId()
-
-                                onConfirm(templateName, selectedExercises.toList(), uId)
+                                onConfirm(templateName, currentSelection, uId)
                             }
                         },
                         enabled = isFormValid

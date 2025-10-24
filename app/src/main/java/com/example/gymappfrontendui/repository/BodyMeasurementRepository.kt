@@ -1,17 +1,18 @@
 package com.example.gymappfrontendui.repository
 
 import android.content.Context
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
 import com.example.gymappfrontendui.db.AppDb
-
 import com.example.gymappfrontendui.db.entity.BodyMeasurement
 import com.example.gymappfrontendui.db.entity.SyncQueue
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi // Potrzebny do flatMapLatest
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull // Zachowujemy dla getUserID
+import kotlinx.coroutines.flow.flatMapLatest // Potrzebny do reaktywności
+import kotlinx.coroutines.flow.flowOf // Potrzebny dla pustej listy
+import kotlinx.coroutines.withContext
 
-
+@OptIn(ExperimentalCoroutinesApi::class)
 class BodyMeasurementRepository(context: Context) {
 
     private val db = AppDb.getInstance(context)
@@ -19,69 +20,61 @@ class BodyMeasurementRepository(context: Context) {
     private val syncQueueDao = db.syncQueueDao()
     private val userDao = db.userDao()
 
-    fun getAvailableBodyMeasurements(): Flow<List<BodyMeasurement>> = flow {
-        userDao.getLoggedInUserIdFlow().collect { loggedInUserId ->
+    fun getAvailableBodyMeasurements(): Flow<List<BodyMeasurement>> {
+        return userDao.getLoggedInUserIdFlow().flatMapLatest { loggedInUserId ->
             val userId = loggedInUserId ?: userDao.getGuestUserId()
-            val measurements = bodyMeasurementDao.getAvailableBodyMeasurements(userId).firstOrNull() ?: emptyList()
-
-            emit(measurements)
+            if (userId == null) {
+                flowOf(emptyList())
+            } else {
+                bodyMeasurementDao.getAvailableBodyMeasurements(userId)
+            }
         }
-
     }
 
     fun getBodyMeasurementById(id: Int): Flow<BodyMeasurement> {
         return bodyMeasurementDao.getBodyMeasurementById(id)
     }
 
-    suspend fun insertBodyMeasurements(bodyMeasurements: List<BodyMeasurement>): List<Long> = withContext(
-        Dispatchers.IO){
-        val userId = userDao.getLoggedInUserId() ?: userDao.getGuestUserId()
-
-        val newId = bodyMeasurementDao.insertBodyMeasurements(bodyMeasurements.map { it.copy(userId = userId) })
-
-        for(i in newId){
+    suspend fun insertBodyMeasurements(bodyMeasurements: List<BodyMeasurement>): List<Long> = withContext(Dispatchers.IO) {
+        val newIds = bodyMeasurementDao.insertBodyMeasurements(bodyMeasurements)
+        newIds.zip(bodyMeasurements).forEach { (newId, measurement) ->
             val q = SyncQueue(
                 tableName = "body_measurements",
-                localId = i.toInt(),
-                userId = userId
+                localId = newId.toInt(),
+                userId = measurement.userId
             )
             syncQueueDao.insertSyncQueue(q)
         }
-        newId
+        newIds
     }
 
-    suspend fun insertBodyMeasurement(bodyMeasurements: BodyMeasurement): Long = withContext(Dispatchers.IO){
-        val userId = userDao.getLoggedInUserId() ?: userDao.getGuestUserId()
-        val newId = bodyMeasurementDao.insertBodyMeasurement(bodyMeasurements.copy(userId = userId))
-
-        val q =SyncQueue(
+    suspend fun insertBodyMeasurement(bodyMeasurement: BodyMeasurement): Long = withContext(Dispatchers.IO) {
+        val newId = bodyMeasurementDao.insertBodyMeasurement(bodyMeasurement)
+        val q = SyncQueue(
             tableName = "body_measurements",
             localId = newId.toInt(),
-            userId = userId
+            userId = bodyMeasurement.userId
         )
         syncQueueDao.insertSyncQueue(q)
         newId
     }
 
-    suspend fun updateBodyMeasurement(bodyMeasurement: BodyMeasurement) = withContext(Dispatchers.IO){
-        val userId = userDao.getLoggedInUserId() ?: userDao.getGuestUserId()
-        bodyMeasurementDao.updateBodyMeasurement(bodyMeasurement.copy(userId = userId))
-
-        if(syncQueueDao.getSyncQueueByTableName(bodyMeasurement.bodyMeasurementId,"body_measurements") == null){
+    suspend fun updateBodyMeasurement(bodyMeasurement: BodyMeasurement) = withContext(Dispatchers.IO) {
+        bodyMeasurementDao.updateBodyMeasurement(bodyMeasurement)
+        if (bodyMeasurement.globalId != null && syncQueueDao.getSyncQueueByTableName(bodyMeasurement.bodyMeasurementId, "body_measurements") == null) {
             val q = SyncQueue(
                 tableName = "body_measurements",
                 localId = bodyMeasurement.bodyMeasurementId,
                 globalId = bodyMeasurement.globalId,
-                userId = userId
+                userId = bodyMeasurement.userId
             )
             syncQueueDao.insertSyncQueue(q)
         }
     }
 
-    suspend fun deleteBodyMeasurement(bodyMeasurement: BodyMeasurement) = withContext(Dispatchers.IO){
-        if(bodyMeasurement.globalId != null){
-            val userId = userDao.getLoggedInUserId() ?: userDao.getGuestUserId()
-
+    suspend fun deleteBodyMeasurement(bodyMeasurement: BodyMeasurement) = withContext(Dispatchers.IO) {
+        if (bodyMeasurement.globalId != null) {
+            val userId = bodyMeasurement.userId ?: userDao.getLoggedInUserId() ?: userDao.getGuestUserId()
             val q = SyncQueue(
                 tableName = "body_measurements",
                 localId = bodyMeasurement.bodyMeasurementId,
@@ -89,16 +82,14 @@ class BodyMeasurementRepository(context: Context) {
                 userId = userId
             )
             syncQueueDao.insertSyncQueue(q)
-        }else{
-            val existing = syncQueueDao.getSyncQueueByTableName(bodyMeasurement.bodyMeasurementId,"body_measurements")
-            if(existing != null){
-                syncQueueDao.deleteSyncQueue(existing)
-            }
+        } else {
+            val existing = syncQueueDao.getSyncQueueByTableName(bodyMeasurement.bodyMeasurementId, "body_measurements")
+            existing?.let { syncQueueDao.deleteSyncQueue(it) }
         }
         bodyMeasurementDao.deleteBodyMeasurement(bodyMeasurement)
     }
 
-    suspend fun deleteBodyMeasurementByGlobalId(id: Int) {
+    suspend fun deleteBodyMeasurementByGlobalId(id: Int) = withContext(Dispatchers.IO) {
         bodyMeasurementDao.deleteBodyMeasurementByGlobalId(id)
     }
 }

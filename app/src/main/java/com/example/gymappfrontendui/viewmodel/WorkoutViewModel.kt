@@ -118,10 +118,21 @@ class WorkoutViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun addSetToExercise(exerciseId: Int) {
-        activeExercises.find { it.exercise.exerciseId == exerciseId }?.let { workoutExercise ->
-            val nextSetNumber = workoutExercise.sets.size + 1
-            workoutExercise.sets.add(ActiveWorkoutSet(setNumber = nextSetNumber))
+        val exerciseIndex = activeExercises.indexOfFirst { it.exercise.exerciseId == exerciseId }
+        if (exerciseIndex != -1) {
+            val currentExercise = activeExercises[exerciseIndex]
+            val nextSetNumber = currentExercise.sets.size + 1
+            val newSet = ActiveWorkoutSet(
+                setId = 0,
+                workoutExerciseId = currentExercise.workoutExerciseId,
+                setNumber = nextSetNumber
+            )
+            val updatedSets = currentExercise.sets.toMutableList().apply { add(newSet) }
+            val updatedExercise = currentExercise.copy(sets = updatedSets)
+            activeExercises[exerciseIndex] = updatedExercise
             updateUiInProgressState()
+        } else {
+            Log.e("WorkoutViewModel", "Exercise with ID $exerciseId not found.")
         }
     }
 

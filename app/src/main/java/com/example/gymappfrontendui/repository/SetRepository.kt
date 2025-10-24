@@ -6,9 +6,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import com.example.gymappfrontendui.db.AppDb
 import com.example.gymappfrontendui.db.entity.Set
+import com.example.gymappfrontendui.db.pojo.WorkoutSetWithDate
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 
 class SetRepository(context: Context) {
-    private val setDao = AppDb.getInstance(context).setDao()
+    private val db = AppDb.getInstance(context)
+    private val setDao = db.setDao()
+    private val userDao = db.userDao()
 
     suspend fun insertSet(set: Set): Long = withContext(Dispatchers.IO){
         val newId = setDao.insertSet(set)
@@ -34,5 +39,16 @@ class SetRepository(context: Context) {
 
     fun getSetByWorkoutExerciseId(workoutExerciseId: Int): Flow<List<Set>> {
         return setDao.getSetByWorkoutExerciseId(workoutExerciseId)
+    }
+    fun getWorkoutSetsWithDateForExercise(exerciseId: Int): Flow<List<WorkoutSetWithDate>> {
+        return userDao.getLoggedInUserIdFlow().flatMapLatest { loggedInUserId: Int? ->
+            val userId: Int? = loggedInUserId ?: userDao.getGuestUserId()
+
+            if (userId == null) {
+                flowOf(emptyList())
+            } else {
+                setDao.getWorkoutSetsWithDateForExerciseAndUser(exerciseId, userId)
+            }
+        }
     }
 }

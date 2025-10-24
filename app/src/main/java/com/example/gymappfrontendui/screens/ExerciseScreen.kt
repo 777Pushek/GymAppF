@@ -1,20 +1,21 @@
 package com.example.gymappfrontendui.screens
 
 
-import androidx.compose.animation.animateColorAsState // <-- NOWY IMPORT
+import android.util.Log
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background // <-- NOWY IMPORT
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.* // <-- Zmieniono na layout.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete // <-- NOWY IMPORT
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.* // <-- Zmieniono na material3.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.gymappfrontendui.db.entity.Exercise
 import com.example.gymappfrontendui.db.entity.MuscleGroup
@@ -71,10 +71,10 @@ fun ExerciseScreen(
             .padding(16.dp)
     ) {
         Text(
-            text = "Ćwiczenia",
-            fontSize = 32.sp,
+            text = "Exercises",
+            style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
-            color = Color.Black,
+            color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
@@ -84,14 +84,14 @@ fun ExerciseScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            placeholder = { Text("Szukaj ćwiczenia...") },
+            placeholder = { Text("Search exercises...") },
             leadingIcon = {
-                Icon(Icons.Default.Search, contentDescription = "Szukaj")
+                Icon(Icons.Default.Search, contentDescription = "Search")
             },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
                     IconButton(onClick = { searchQuery = "" }) {
-                        Icon(Icons.Default.Close, contentDescription = "Wyczyść")
+                        Icon(Icons.Default.Close, contentDescription = "Clear")
                     }
                 }
             },
@@ -100,14 +100,14 @@ fun ExerciseScreen(
         )
 
         Text(
-            text = "Znaleziono: ${filteredExercises.size}",
-            fontSize = 14.sp,
-            color = Color.Gray,
+            text = "Found: ${filteredExercises.size}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         LazyColumn(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(filteredExercises, key = { it.exercise.exerciseId }) { exerciseWithGroups ->
 
@@ -124,14 +124,13 @@ fun ExerciseScreen(
                         }
                         return@rememberSwipeToDismissBoxState false
                     },
-                    positionalThreshold = { it * .25f }
+                    positionalThreshold = { pos -> pos * .25f }
                 )
 
                 SwipeToDismissBox(
                     state = dismissState,
                     enableDismissFromEndToStart = isCustom,
                     enableDismissFromStartToEnd = false,
-
                     backgroundContent = {
                         val color by animateColorAsState(
                             targetValue = when (dismissState.targetValue) {
@@ -157,8 +156,7 @@ fun ExerciseScreen(
                     }
                 ) {
                     ExerciseItem(exerciseWithGroups = exerciseWithGroups) {
-                        //TODO: przejście do szczegółów ćwiczenia
-                        println("Kliknięto: ${exerciseWithGroups.exercise.name}")
+                        println("Clicked: ${exerciseWithGroups.exercise.name}")
                     }
                 }
             }
@@ -187,7 +185,6 @@ fun ExerciseItem(exerciseWithGroups: ExerciseWithMuscleGroups, onClick: () -> Un
 
     val exercise = exerciseWithGroups.exercise
     val muscleGroups = exerciseWithGroups.muscleGroups
-
     val isCustom = exercise.userId != null
 
     Card(
@@ -195,7 +192,11 @@ fun ExerciseItem(exerciseWithGroups: ExerciseWithMuscleGroups, onClick: () -> Un
             .fillMaxWidth()
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
             modifier = Modifier
@@ -207,13 +208,13 @@ fun ExerciseItem(exerciseWithGroups: ExerciseWithMuscleGroups, onClick: () -> Un
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.height(32.dp)
+                    modifier = Modifier.heightIn(min = 24.dp)
                 ) {
                     Text(
                         text = exercise.name,
-                        fontSize = 18.sp,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     if (isCustom) {
@@ -223,33 +224,28 @@ fun ExerciseItem(exerciseWithGroups: ExerciseWithMuscleGroups, onClick: () -> Un
                             label = {
                                 Text(
                                     text = "Custom",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
+                                    style = MaterialTheme.typography.labelSmall
                                 )
                             },
-
+                            modifier = Modifier.height(24.dp),
                             colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                labelColor = MaterialTheme.colorScheme.onSecondaryContainer
                             ),
-                            border = BorderStroke(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                            )
+                            border = null
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.padding(top = 4.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 val groupsText = muscleGroups.joinToString(", ") { it.name }
                 Text(
-                    text = if (groupsText.isEmpty()) "Brak przypisanych grup" else groupsText,
-                    fontSize = 14.sp,
-                    color = Color.Gray,
+                    text = if (groupsText.isEmpty()) "No assigned groups" else groupsText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2
                 )
-
             }
         }
     }
@@ -264,19 +260,15 @@ fun AddExerciseDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
-
-    val users by loginViewModel.getUser().collectAsState(initial = emptyList())
-
     val muscleGroups by exercisesViewModel.getAllMuscleGroups().collectAsState(initial = emptyList())
 
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var selectedMuscleGroups by remember { mutableStateOf(emptySet<MuscleGroup>()) }
-    var expanded by remember { mutableStateOf(false) }
     var showError by remember { mutableStateOf(false) }
+    var showInsertionError by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
-
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -292,34 +284,43 @@ fun AddExerciseDialog(
             ) {
                 Text(
                     text = "Add new exercise",
-                    fontSize = 24.sp,
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
                 if (showError) {
                     Text(
-                        text = "Wystąpił błąd podczas dodawania ćwiczenia",
+                        text = "Name and at least one muscle group are required.",
                         color = MaterialTheme.colorScheme.error,
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+                if (showInsertionError) {
+                    Text(
+                        text = "Error adding exercise. Please try again.",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
 
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nazwa ćwiczenia") },
+                    onValueChange = { name = it; showError = false },
+                    label = { Text("Exercise name") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 12.dp),
-                    singleLine = true
+                    singleLine = true,
+                    isError = showError && name.isBlank()
                 )
 
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Opis") },
+                    label = { Text("Description (Optional)") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 12.dp),
@@ -328,61 +329,80 @@ fun AddExerciseDialog(
                 )
 
                 Text(
-                    text = "Wybierz partie mięśniowe",
-                    style = MaterialTheme.typography.bodyLarge,
+                    text = "Select muscle groups",
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
-                FlowRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 24.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    muscleGroups.forEach { group ->
-                        val isSelected = selectedMuscleGroups.contains(group)
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = {
-                                selectedMuscleGroups = if (isSelected) {
-                                    selectedMuscleGroups - group
-                                } else {
-                                    selectedMuscleGroups + group
-                                }
-                            },
-                            label = { Text(group.name) }
-                        )
+                Box(modifier = Modifier.heightIn(max=150.dp)) {
+                    FlowRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        muscleGroups.forEach { group ->
+                            val isSelected = selectedMuscleGroups.contains(group)
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = {
+                                    selectedMuscleGroups = if (isSelected) {
+                                        selectedMuscleGroups - group
+                                    } else {
+                                        selectedMuscleGroups + group
+                                    }
+                                    showError = false
+                                },
+                                label = { Text(group.name) }
+                            )
+                        }
                     }
                 }
+                if (showError && selectedMuscleGroups.isEmpty()) {
+                    Text(
+                        text = "Select at least one muscle group.",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = {
-                        onDismiss()
-                    }) {
+                    TextButton(onClick = onDismiss) {
                         Text("Cancel")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
+                            if (name.isBlank() || selectedMuscleGroups.isEmpty()) {
+                                showError = true
+                                showInsertionError = false
+                                return@Button
+                            }
+                            showError = false
+                            showInsertionError = false
                             scope.launch {
                                 val uId = loginViewModel.getLoggedInUserID() ?: loginViewModel.getGuestUserId()
-
                                 val exerciseToInsert = Exercise(
                                     userId = uId,
                                     name = name,
                                     description = description,
                                 )
-
-                                exercisesViewModel.insertExercise(exerciseToInsert,selectedMuscleGroups.map { it.muscleGroupId })
-
-                                onConfirm()
+                                try {
+                                    exercisesViewModel.insertExercise(exerciseToInsert,selectedMuscleGroups.map { it.muscleGroupId })
+                                    onConfirm()
+                                } catch (e: Exception) {
+                                    showInsertionError = true
+                                    Log.e("AddExerciseDialog", "Error inserting exercise", e)
+                                }
                             }
-                        },
-                        enabled = name.isNotBlank() && selectedMuscleGroups.isNotEmpty()
-
+                        }
                     ) {
                         Text("Add")
                     }

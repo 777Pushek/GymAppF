@@ -12,6 +12,8 @@ import com.example.gymappfrontendui.db.relationships.ExerciseWithMuscleGroups
 import com.example.gymappfrontendui.db.relationships.ExerciseWithWorkoutExercise
 import com.example.gymappfrontendui.db.relationships.ExerciseWithWorkoutTemplates
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 
 
@@ -168,6 +170,13 @@ class ExerciseRepository(context: Context) {
 
     suspend fun insertAllExercisesMuscleGroups(exerciseMuscleGroups: List<ExerciseMuscleGroup>) {
         exerciseMuscleGroupDao.insertAllExercisesMuscleGroups(exerciseMuscleGroups)
+    }
+
+    suspend fun getAllExercisesMap(): Map<Int, Exercise> = withContext(Dispatchers.IO) {
+        val loggedInUserId = userDao.getLoggedInUserIdFlow().firstOrNull()
+        val userId = loggedInUserId ?: userDao.getGuestUserId()
+        val exercises = exerciseDao.getAvailableExercises(userId).first()
+        exercises.associateBy { it.exerciseId }
     }
 
 }

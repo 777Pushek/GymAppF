@@ -1,11 +1,11 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.example.gymappfrontendui.screens
-
+import java.time.YearMonth
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,13 +28,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.gymappfrontendui.models.WorkoutHistoryItem
 import com.example.gymappfrontendui.viewmodel.HistoryViewModel
-// Poprawne importy dla wersji 1.4.0
 import io.github.boguszpawlowski.composecalendar.SelectableCalendar
 import io.github.boguszpawlowski.composecalendar.rememberSelectableCalendarState
 import io.github.boguszpawlowski.composecalendar.selection.SelectionMode
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.navigation.NavController
+import com.example.gymappfrontendui.Routes
 
 private val dayOfWeekFormatter = DateTimeFormatter.ofPattern("EEEE", Locale.getDefault())
 private val dateFormatter = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.getDefault())
@@ -45,7 +46,8 @@ private val filterChipFormatter = DateTimeFormatter.ofPattern("MMM d", Locale.ge
 @Composable
 fun HistoryScreen(
     modifier: Modifier = Modifier,
-    historyViewModel: HistoryViewModel = viewModel()
+    historyViewModel: HistoryViewModel = viewModel(),
+    navController: NavController
 ) {
     val historyList by historyViewModel.historyState.collectAsState()
     val workoutDates by historyViewModel.workoutDates.collectAsState()
@@ -135,7 +137,9 @@ fun HistoryScreen(
                     WorkoutHistoryCard(
                         item = workoutItem,
                         onDelete = { historyViewModel.deleteWorkout(workoutItem.workoutId) },
-                        onEdit = { }
+                        onEdit = {
+                            navController.navigate("${Routes.EditWorkoutHistoryScreen}/${workoutItem.workoutId}")
+                        }
                     )
                 }
             }
@@ -152,12 +156,15 @@ fun CalendarView(
 ) {
     val calendarState = rememberSelectableCalendarState(
         initialSelection = selectedDate?.let { listOf(it) } ?: emptyList(),
-        initialSelectionMode = SelectionMode.Single
+        initialSelectionMode = SelectionMode.Single,
+        initialMonth = selectedDate?.let { YearMonth.from(it) } ?: YearMonth.now()
     )
+
 
     SelectableCalendar(
         calendarState = calendarState,
-        modifier = modifier.padding(horizontal = 16.dp),
+        modifier = modifier.padding(horizontal = 8.dp),
+
         dayContent = { dayState ->
             val date = dayState.date
             val hasWorkout = activeDates.contains(date)
@@ -173,12 +180,12 @@ fun CalendarView(
                 isSelected -> MaterialTheme.colorScheme.onPrimary
                 hasWorkout -> MaterialTheme.colorScheme.onPrimaryContainer
                 dayState.isFromCurrentMonth -> MaterialTheme.colorScheme.onSurface
-                else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             }
 
             Box(
                 modifier = Modifier
-                    .padding(2.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
                     .background(backgroundColor)
                     .clickable(
@@ -192,8 +199,9 @@ fun CalendarView(
             ) {
                 Text(
                     text = dayState.date.dayOfMonth.toString(),
-                    color = textColor,
-                    fontWeight = if (hasWorkout || isSelected) FontWeight.Bold else FontWeight.Normal
+                    color = Color.White,
+                    fontWeight = if (hasWorkout || isSelected) FontWeight.Bold else FontWeight.Normal,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
@@ -210,8 +218,12 @@ fun WorkoutHistoryCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             Row(
@@ -245,7 +257,11 @@ fun WorkoutHistoryCard(
 
                 Box(modifier = Modifier.size(40.dp)) {
                     IconButton(onClick = { menuExpanded = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = "More options",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                     DropdownMenu(
                         expanded = menuExpanded,
@@ -268,34 +284,60 @@ fun WorkoutHistoryCard(
                     }
                 }
             }
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
 
             Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Exercise", modifier = Modifier.weight(2f), style = MaterialTheme.typography.labelMedium)
-                Text("Sets", modifier = Modifier.weight(0.8f), style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
-                Text("Best Set", modifier = Modifier.weight(1.2f), style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.End)
+                Text(
+                    "Exercise",
+                    modifier = Modifier.weight(2f),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    "Sets",
+                    modifier = Modifier.weight(0.8f),
+                    style = MaterialTheme.typography.labelMedium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    "Best Set",
+                    modifier = Modifier.weight(1.2f),
+                    style = MaterialTheme.typography.labelMedium,
+                    textAlign = TextAlign.End,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Column {
                 item.exercises.forEach { detail ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
                             text = detail.name,
                             modifier = Modifier.weight(2f),
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = detail.setCount.toString(),
                             modifier = Modifier.weight(0.8f),
                             style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = detail.bestSet,

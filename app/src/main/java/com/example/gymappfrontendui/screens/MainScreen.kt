@@ -240,6 +240,7 @@ fun ContentScreen(modifier: Modifier = Modifier, selectedIndex : Int, login: Str
         4 -> HistoryScreen(
             modifier = modifier,
             historyViewModel = historyViewModel
+            ,navController = navController
         )
 
 

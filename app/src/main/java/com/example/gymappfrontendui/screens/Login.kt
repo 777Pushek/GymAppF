@@ -1,206 +1,244 @@
 package com.example.gymappfrontendui.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.* // Use wildcard import
+import androidx.compose.foundation.text.KeyboardActions // Import for keyboard actions
+import androidx.compose.foundation.text.KeyboardOptions // Import for keyboard options
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.* // Use wildcard import
 import androidx.compose.runtime.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+// Removed unused Color import
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager // Import to manage focus
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction // Import for keyboard actions
+import androidx.compose.ui.text.input.KeyboardType // Import for keyboard types
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+// Removed unused sp import
 import androidx.navigation.NavController
 import com.example.gymappfrontendui.R
+import com.example.gymappfrontendui.Routes
 import com.example.gymappfrontendui.viewmodel.LoginRegistryViewModel
 
 
 @Composable
-fun LoginScreen(navController: NavController, mainViewModel : LoginRegistryViewModel)
-{
+fun LoginScreen(navController: NavController, mainViewModel: LoginRegistryViewModel) {
 
     val loggedInUser by mainViewModel.loggedInUser.collectAsState(initial = null)
 
-    ///zmienne
-
-    var login by remember {
-        mutableStateOf("")
-    }
-    var password by remember {
-        mutableStateOf("")
-    }
-
-    var showPassword by remember {
-        mutableStateOf(false)
-    }
-
-    var showError by remember {
-        mutableStateOf(false) }
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var showPassword by remember { mutableStateOf(false) }
+    var showError by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
 
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
             painter = painterResource(id = R.drawable.biceps),
-            contentDescription = "Login image",
+            contentDescription = "App logo",
             modifier = Modifier.size(160.dp)
         )
 
-        Text("Witaj!", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            "Welcome!",
+            style = MaterialTheme.typography.displaySmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            "Login to your account",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        OutlinedTextField(
+            value = username,
+            onValueChange = { username = it; if (showError) showError = isEmpty(it) },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Username") },
+            leadingIcon = {
+                Icon(Icons.Rounded.AccountCircle, contentDescription = "Username icon")
+            },
+            isError = showError && isEmpty(username),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+        )
 
         Spacer(modifier = Modifier.height(4.dp))
-
-        Text("Zaloguj się do swojego konta")
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedTextField(value = login, onValueChange = {
-            login = it
-        }, label = { Text("Login") },
-            leadingIcon = {
-                Icon( Icons.Rounded.AccountCircle,
-                    contentDescription = "Login icon")
-            },
-            isError = showError && isEmpty(login))
-        Spacer(modifier = Modifier.height(12.dp))
-        if (showError && isEmpty(login)) {
+        if (showError && isEmpty(username)) {
             Text(
-                text = "Login jest wymagany!",
-                color = Color.Red,
-                fontSize = 12.sp
+                text = "Username is required!",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(start = 16.dp)
             )
+        } else {
+            Spacer(modifier = Modifier.height(4.dp + 16.dp))
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedTextField(value = password, onValueChange = {
-            password = it
-        }, label = { Text("Hasło") },
-            isError = showError && isEmpty(password),
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it; if (showError) showError = isEmpty(it) },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Password") },
             leadingIcon = {
-                Icon( Icons.Rounded.Lock,
-                    contentDescription = "Login icon")
+                Icon(Icons.Rounded.Lock, contentDescription = "Password icon")
             },
-            visualTransformation = if(showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+            visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
-                val image = if (showPassword)
+                val imagePainter = if (showPassword)
                     painterResource(id = R.drawable.show)
                 else
                     painterResource(id = R.drawable.hide)
+                val description = if (showPassword) "Hide password" else "Show password"
 
                 Icon(
-                    painter = image,
-                    contentDescription = "Password visibility icon",
-                    modifier = Modifier.clickable{
-                        showPassword = !showPassword
-                    }.size(24.dp)
+                    painter = imagePainter,
+                    contentDescription = description,
+                    modifier = Modifier
+                        .clickable { showPassword = !showPassword }
+                        .size(24.dp)
                 )
-
-            }
-
+            },
+            isError = showError && isEmpty(password),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(onDone = {
+                focusManager.clearFocus()
+            })
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(4.dp))
         if (showError && isEmpty(password)) {
             Text(
-                text = "Hasło jest wymagane!",
-                color = Color.Red,
-                fontSize = 12.sp
+                text = "Password is required!",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(start = 16.dp)
             )
+        } else {
+            Spacer(modifier = Modifier.height(4.dp + 16.dp))
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = {
-            showError = true
-            if(!isEmpty(login) && !isEmpty(password)){
-                mainViewModel.login(login, password)
-
-            }
-        }) {
-            Text("Zaloguj")
-        }
-
-        OutlinedButton(
+        Button(
             onClick = {
-                mainViewModel.setAppHasBeenOpened()
+                focusManager.clearFocus()
+                showError = true
+                if (!isEmpty(username) && !isEmpty(password)) {
 
-                navController.navigate("Main_Screen/guest")
-                {
-                    popUpTo("Login_Page") { inclusive = true }
+
+                    mainViewModel.login(username, password) { success ->
+
+                        if (success) {
+                            navController.navigate("Main_Screen/$username") {
+
+                                popUpTo(Routes.LoginPage) { inclusive = true }
+                            }
+                        } else {
+                            Toast.makeText(context, "Błędne dane logowania", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+
+                    }
                 }
             },
-            modifier = Modifier.fillMaxWidth(0.7f),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = Color.Gray
-            )
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Kontynuuj bez konta", fontSize = 14.sp)
+            Text("Login")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Row{
-            TextButton(onClick = { }) {
-                Text(text = "Zapomniałem hasła")
-            }
-            TextButton(onClick = { navController.navigate("Register_Page")}) {
-                Text(text = "Zarejestruj się")
-            }
-
+        OutlinedButton(
+            onClick = {
+                mainViewModel.setAppHasBeenOpened()
+                navController.navigate("Main_Screen/guest") {
+                    popUpTo("Login_Page") { inclusive = true }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        ) {
+            Text(
+                "Continue without account",
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
-        //Text("Lub zaloguj się używając")
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            TextButton(onClick = { /* TODO: Implement Forgot Password */ }) {
+                Text(text = "Forgot Password?")
+            }
+            TextButton(onClick = { navController.navigate("Register_Page") }) {
+                Text(text = "Register here")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
         ) {
-            HorizontalDivider(modifier = Modifier.weight(1f), color = Color.LightGray)
-            Text("  LUB  ", fontSize = 12.sp, color = Color.Gray)
-            HorizontalDivider(modifier = Modifier.weight(1f), color = Color.LightGray)
+            HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant) // Use theme color
+            Text(
+                "  OR  ",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant) // Use theme color
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
         Image(
             painter = painterResource(id = R.drawable.google),
-            contentDescription = "Login google image",
-            modifier = Modifier.size(50.dp).clickable{
-                // google logowanie
-            }
+            contentDescription = "Login with Google",
+            modifier = Modifier
+                .size(50.dp)
+                .clickable {
+                    // TODO: Implement Google login
+                }
         )
-
     }
-
 }
+
 fun isEmpty(text: String): Boolean {
     return text.isEmpty()
 }

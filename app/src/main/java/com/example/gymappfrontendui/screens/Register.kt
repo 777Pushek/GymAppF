@@ -1,200 +1,250 @@
 package com.example.gymappfrontendui.screens
+
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+// Usunięto importy Visibility/VisibilityOff
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource // Potrzebny do drawable
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.gymappfrontendui.R
 import com.example.gymappfrontendui.viewmodel.LoginRegistryViewModel
 
-@Composable
-fun RegisterScreen(navController: NavController,mainViewModel: LoginRegistryViewModel)
-{
+fun isValidPassword(password: String): Boolean {
+    if (password.length < 8) {
+        return false
+    }
+    if (!password.any { it.isUpperCase() }) return false
+    if (!password.any { it.isDigit() }) return false
+    return true
+}
 
-    var login by remember {
-        mutableStateOf("")
-    }
-    var password by remember {
-        mutableStateOf("")
-    }
-    var confirmPassword by remember {
-        mutableStateOf("")
-    }
-    var showError by remember {
-        mutableStateOf(false) }
+@Composable
+fun RegisterScreen(navController: NavController, mainViewModel: LoginRegistryViewModel) {
+
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var showError by remember { mutableStateOf(false) }
 
     val passwordsNotMatching = password != confirmPassword
+    val passwordTooWeak = !isValidPassword(password) || password.isBlank()
+    val usernameEmpty = username.isBlank()
 
-    val passwordTooWeak = !isValidPassword(password)
-
-    var showPassword by remember {
-        mutableStateOf(false)
-    }
-    var showConfirmPassword by remember {
-        mutableStateOf(false) }
+    var showPassword by remember { mutableStateOf(false) }
+    var showConfirmPassword by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
 
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
             painter = painterResource(id = R.drawable.biceps),
-            contentDescription = "Login image",
+            contentDescription = "App logo",
             modifier = Modifier.size(160.dp)
         )
 
-        Text("Rejestracja", fontSize = 38.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text("Wpisz poniżej swoje dane do rejestracji")
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedTextField(value = login, onValueChange = {
-            login = it
-        }, label = { Text("Login") },
-            leadingIcon = {
-                Icon( Icons.Rounded.AccountCircle,
-                    contentDescription = "Login icon")
-            },
-            isError = showError && isEmpty(login)
+        Text(
+            "Register",
+            style = MaterialTheme.typography.displaySmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
         )
-        Spacer(modifier = Modifier.height(12.dp))
-        if (showError && isEmpty(login)) {
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            "Enter your details below to register",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        OutlinedTextField(
+            value = username,
+            onValueChange = { username = it; if (showError) showError = username.isBlank() },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Username") },
+            leadingIcon = {
+                Icon(Icons.Rounded.AccountCircle, contentDescription = "Username icon")
+            },
+            isError = showError && usernameEmpty,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+        )
+        if (showError && usernameEmpty) {
             Text(
-                text = "Login jest wymagany!",
-                color = Color.Red,
-                fontSize = 12.sp
+                text = "Username is required!",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(start = 16.dp, top = 4.dp)
             )
+        } else {
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(value = password, onValueChange = {
-            password = it
-        }, label = { Text("Hasło") },
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it; if (showError) showError = !isValidPassword(it) || it.isBlank() },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Password") },
+            leadingIcon = {
+                Icon(Icons.Rounded.Lock, contentDescription = "Password icon")
+            },
+            visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val imagePainter = if (showPassword)
+                    painterResource(id = R.drawable.show)
+                else
+                    painterResource(id = R.drawable.hide)
+                val description = if (showPassword) "Hide password" else "Show password"
+
+                Icon(
+                    painter = imagePainter,
+                    contentDescription = description,
+                    modifier = Modifier
+                        .clickable { showPassword = !showPassword }
+                        .size(24.dp)
+                )
+            },
             isError = showError && passwordTooWeak,
-            leadingIcon = {
-                Icon( Icons.Rounded.Lock,
-                    contentDescription = "Login icon")
-            },
-            visualTransformation = if(showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-            trailingIcon = {
-                val image = if (showPassword)
-                    painterResource(id = R.drawable.show)
-                else
-                    painterResource(id = R.drawable.hide)
-
-                Icon(
-                    painter = image,
-                    contentDescription = "Password visibility icon",
-                    modifier = Modifier.clickable{
-                        showPassword = !showPassword
-                    }.size(24.dp)
-                )
-
-            }
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Next
+            )
         )
-
-        if(showError && passwordTooWeak){
-            Spacer(modifier = Modifier.height(4.dp))
+        if (showError && passwordTooWeak) {
+            val errorText = when {
+                password.isBlank() -> "Password is required!"
+                !isValidPassword(password) -> "Min. 8 chars, 1 uppercase, 1 digit"
+                else -> ""
+            }
             Text(
-                text = "Hasło musi mieć min. 8 znaków, 1 dużą literę i cyfrę",
-                color = Color.Red,
-                fontSize = 12.sp
-)}
-        Spacer(modifier = Modifier.height(12.dp))
+                text = errorText,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(start = 16.dp, top = 4.dp)
+            )
+        } else {
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
-        OutlinedTextField(value = confirmPassword, onValueChange = {
-            confirmPassword = it
-        }, label = { Text("Powtórz hasło") },
-            isError = showError && passwordsNotMatching,
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = confirmPassword,
+            onValueChange = { confirmPassword = it; if (showError) showError = password != it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Confirm Password") },
             leadingIcon = {
-                Icon( Icons.Rounded.Lock,
-                    contentDescription = "Login icon")
+                Icon(Icons.Rounded.Lock, contentDescription = "Confirm password icon")
             },
-            visualTransformation = if(showConfirmPassword) VisualTransformation.None else PasswordVisualTransformation(),
+            visualTransformation = if (showConfirmPassword) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
-                val image = if (showConfirmPassword)
+                val imagePainter = if (showConfirmPassword)
                     painterResource(id = R.drawable.show)
                 else
                     painterResource(id = R.drawable.hide)
+                val description = if (showConfirmPassword) "Hide password" else "Show password"
 
                 Icon(
-                    painter = image,
-                    contentDescription = "Password visibility icon",
-                    modifier = Modifier.clickable{
-                        showConfirmPassword = !showConfirmPassword
-                    }.size(24.dp)
+                    painter = imagePainter,
+                    contentDescription = description,
+                    modifier = Modifier
+                        .clickable { showConfirmPassword = !showConfirmPassword }
+                        .size(24.dp)
                 )
-
-            }
+            },
+            isError = showError && passwordsNotMatching,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(onDone = {
+                focusManager.clearFocus()
+            })
         )
         if (showError && passwordsNotMatching) {
             Text(
-                text = "Hasła nie są takie same",
-                color = Color.Red,
-                fontSize = 12.sp
+                text = "Passwords do not match",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(start = 16.dp, top = 4.dp)
             )
+        } else {
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Button(onClick = {
-            showError = true
-            if(!passwordsNotMatching && !passwordTooWeak && !isEmpty(login)){
-              //  mainViewModel.register(username = login, password = password)
-                
-                navController.navigate("Login_Page")
-            }
+        Button(
+            onClick = {
+                focusManager.clearFocus()
+                showError = true
+                val canRegister = !passwordsNotMatching && !passwordTooWeak && !username.isBlank()
 
-        }) {
-            Text("Zarejestruj się")
+                if (canRegister) {
+
+                    mainViewModel.register(username, password) { success ->
+                        if (success) {
+                            navController.navigate("Main_Screen/$username") {
+                                popUpTo("Login_Page") { inclusive = true }
+                            }
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Register failed",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Register")
         }
 
-        TextButton(onClick = {navController.navigate("Login_Page")}) {
-            Text("Powrót do logowania")
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextButton(onClick = { navController.navigate("Login_Page") }) {
+            Text("Back to Login")
         }
     }
-}
-fun isValidPassword(password: String): Boolean {
-    if(password.length < 8){
-        return false
-    }
-    if (!password.any { it.isUpperCase() }) return false
-
-    if (!password.any { it.isDigit() }) return false
-
-    return true
 }

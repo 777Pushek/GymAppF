@@ -53,13 +53,25 @@ class LoginRegistryViewModel(app: Application): AndroidViewModel(app) {
         initialValue = null
     )
 
-    private val _currentUsername = MutableStateFlow(getCurrentUsername())
 
-    val currentUsername: StateFlow<String> = _currentUsername.asStateFlow()
-
-    fun login(username: String, password: String) {
+    fun login(
+        username: String,
+        password: String,
+        onLoginResult: (success: Boolean) -> Unit
+    ) {
         viewModelScope.launch {
-            userRepository.login(username, password)
+            val success = userRepository.login(username, password)
+            onLoginResult(success)
+        }
+    }
+    fun register(
+        username: String,
+        password: String,
+        onRegisterResult: (success: Boolean) -> Unit
+    ) {
+        viewModelScope.launch {
+            val success = userRepository.register(username, password)
+            onRegisterResult(success)
         }
     }
     suspend fun getLoggedInUserID(): Int? {
@@ -78,13 +90,13 @@ class LoginRegistryViewModel(app: Application): AndroidViewModel(app) {
         }
     }
 
-    private fun getCurrentUsername(): String {
-        return if (!_loginState.value) {
-            "guest"
-        } else {
-            sharedPrefs.getString("current_username", "") ?: ""
-        }
-    }
+    val currentUsername: StateFlow<String> = loggedInUser.map { user ->
+        user?.userName ?: "guest"
+    }.stateIn(
+        scope = viewModelScope,
+        started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(1000),
+        initialValue = "guest"
+    )
 
     suspend fun insertUser(user: User): Long{
         return userRepository.insertUser(user)

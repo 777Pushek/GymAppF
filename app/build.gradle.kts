@@ -103,4 +103,7 @@ dependencies {
     // calendar
     implementation("io.github.boguszpawlowski.composecalendar:composecalendar:1.4.0")
     implementation("io.github.boguszpawlowski.composecalendar:kotlinx-datetime:1.4.0")
+
+    implementation("io.github.ehsannarmani:compose-charts:0.2.0")
+
 }
