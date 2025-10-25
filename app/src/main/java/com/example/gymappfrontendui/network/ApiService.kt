@@ -35,6 +35,7 @@ import com.example.gymappfrontendui.network.dto.response.GetWorkoutsResponse
 import com.example.gymappfrontendui.network.dto.response.RegisterResponse
 import com.example.gymappfrontendui.network.dto.response.ResetPasswordResponse
 import com.example.gymappfrontendui.network.dto.response.UserLastSyncResponse
+import com.example.gymappfrontendui.network.dto.response.UserMeResponse
 import com.example.gymappfrontendui.network.dto.response.VerifyEmailResponse
 import com.example.gymappfrontendui.network.dto.response.VerifyResetCodeResponse
 import retrofit2.Call
@@ -95,6 +96,9 @@ interface ApiService {
 
     @GET("users/me/last-sync")
     suspend fun getUserLastSync(): UserLastSyncResponse
+
+    @GET("users/me")
+    suspend fun getUserInfo(): UserMeResponse
 
     //========================================= Sync =====================================
     //========================================= bodyMeasurements =====================================

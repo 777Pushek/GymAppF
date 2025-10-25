@@ -13,32 +13,32 @@ import com.example.gymappfrontendui.db.relationships.UserWithBodyMeasurements
 import com.example.gymappfrontendui.db.relationships.UserWithExercises
 import com.example.gymappfrontendui.db.relationships.UserWithExercisesAndMuscleGroups
 import com.example.gymappfrontendui.db.relationships.UserWithExercisesAndSets
-import com.example.gymappfrontendui.db.relationships.UserWithSyncQueues
 import com.example.gymappfrontendui.db.relationships.UserWithWorkoutTemplates
 import com.example.gymappfrontendui.db.relationships.UserWithWorkouts
+import com.example.gymappfrontendui.models.AccountType
 
 @Dao
 interface UserDao {
 
-    @Query("SELECT last_sync FROM users WHERE isLoggedIn = 1 LIMIT 1")
+    @Query("SELECT last_sync FROM users WHERE is_loggedIn = 1 LIMIT 1")
     suspend fun getLastSync(): String?
 
-    @Query("SELECT user_id FROM users WHERE isGuest = 1 LIMIT 1")
+    @Query("SELECT user_id FROM users WHERE account_type = 'GUEST' LIMIT 1")
     suspend fun getGuestUserId(): Int
 
-    @Query("SELECT user_id FROM users WHERE isLoggedIn = 1 LIMIT 1")
+    @Query("SELECT user_id FROM users WHERE is_loggedIn = 1 LIMIT 1")
     suspend fun getLoggedInUserId(): Int?
 
-    @Query("SELECT user_id FROM users WHERE isGuest = 1 LIMIT 1")
+    @Query("SELECT user_id FROM users WHERE account_type = 'GUEST' LIMIT 1")
     fun getGuestUserIdFlow(): Flow<Int>
 
-    @Query("SELECT user_id FROM users WHERE isLoggedIn = 1 LIMIT 1")
+    @Query("SELECT user_id FROM users WHERE is_loggedIn = 1 LIMIT 1")
     fun getLoggedInUserIdFlow(): Flow<Int?>
 
-    @Query("UPDATE users SET last_sync = :lastSync WHERE isLoggedIn = 1")
+    @Query("UPDATE users SET last_sync = :lastSync WHERE is_loggedIn = 1")
     suspend fun updateLastSync(lastSync: String)
 
-    @Query("SELECT * FROM users WHERE isLoggedIn = 1 LIMIT 1")
+    @Query("SELECT * FROM users WHERE is_loggedIn = 1 LIMIT 1")
     suspend fun getLoggedInUser(): User?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -55,8 +55,8 @@ interface UserDao {
 
     @Query("SELECT * FROM users WHERE user_id = :id")
     fun getUserById(id: Int): Flow<User>
-    @Query("SELECT * FROM users WHERE user_name = :username LIMIT 1")
-    suspend fun getUserByUsername(username: String): User?
+    @Query("SELECT * FROM users WHERE user_name = :username AND account_type = :accountType LIMIT 1")
+    suspend fun getUserByUsernameAndType(username: String, accountType: AccountType): User?
 
     @Query("SELECT * FROM users")
     fun getAllUsers(): Flow<List<User>>

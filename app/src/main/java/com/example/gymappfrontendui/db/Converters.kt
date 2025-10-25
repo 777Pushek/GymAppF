@@ -1,6 +1,7 @@
 package com.example.gymappfrontendui.db
 
 import androidx.room.TypeConverter
+import com.example.gymappfrontendui.models.AccountType
 import com.example.gymappfrontendui.models.DayOfWeek
 import com.example.gymappfrontendui.models.NotificationTime
 
@@ -21,4 +22,11 @@ class Converters {
     @TypeConverter
     fun toDayOfWeek(value: String?): DayOfWeek? =
         value?.let { v -> DayOfWeek.entries.firstOrNull { it.value == v } }
+
+    @TypeConverter
+    fun fromAccountType(value: AccountType?): String? = value?.name
+
+    @TypeConverter
+    fun toAccountType(value: String?): AccountType? =
+        value?.let { AccountType.valueOf(it) }
 }

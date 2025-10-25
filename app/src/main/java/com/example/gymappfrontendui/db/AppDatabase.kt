@@ -35,6 +35,7 @@ import com.example.gymappfrontendui.db.entity.Workout
 import com.example.gymappfrontendui.db.entity.WorkoutExercise
 import com.example.gymappfrontendui.db.entity.WorkoutTemplate
 import com.example.gymappfrontendui.db.entity.WorkoutTemplateExercise
+import com.example.gymappfrontendui.models.AccountType
 
 
 @Database(entities = [
@@ -119,8 +120,8 @@ class AppDatabaseCallback(private val context: Context): RoomDatabase.Callback()
         userDao.insertUser(User(
             userName = "guest",
             isLoggedIn = false,
-            isGuest = true,
-            email = null
+            email = null,
+            accountType = AccountType.GUEST
         ))
 
         val ex1_benchId = exerciseDao.insertExercise(Exercise(

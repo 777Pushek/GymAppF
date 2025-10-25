@@ -17,6 +17,7 @@ import com.example.gymappfrontendui.db.relationships.UserWithExercisesAndMuscleG
 import com.example.gymappfrontendui.db.relationships.UserWithExercisesAndSets
 import com.example.gymappfrontendui.db.relationships.UserWithWorkoutTemplates
 import com.example.gymappfrontendui.db.relationships.UserWithWorkouts
+import com.example.gymappfrontendui.models.AccountType
 import com.example.gymappfrontendui.network.ApiClient
 import com.example.gymappfrontendui.network.TokenManager
 import com.example.gymappfrontendui.network.dto.reguest.AddEmailRequest
@@ -30,6 +31,7 @@ import com.example.gymappfrontendui.network.dto.reguest.RegisterRequest
 import com.example.gymappfrontendui.network.dto.reguest.ResetPasswordRequest
 import com.example.gymappfrontendui.network.dto.reguest.VerifyEmailRequest
 import com.example.gymappfrontendui.network.dto.reguest.VerifyResetCodeRequest
+import com.example.gymappfrontendui.network.dto.response.UserMeResponse
 
 import org.json.JSONObject
 
@@ -41,21 +43,40 @@ class UserRepository(context: Context){
 
     private val tokenManager = TokenManager(context)
 
+    suspend fun getUserInfo(): UserMeResponse? {
+        return try {
+            api.getUserInfo()
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Get User Info failed: ${e.message}")
+            null
+        }
+    }
+
     suspend fun login(username: String, password: String): Boolean {
         return try {
             val response = api.login(LoginRequest(username = username, password = password))
             tokenManager.saveToken(response.token)
-            val localUser = userDao.getUserByUsername(username)
-            if (localUser != null) {
-                userDao.updateUser(localUser.copy(isLoggedIn = true))
-            } else {
-                userDao.insertUser(
-                    User(
-                        email = null,
-                        userName = username,
-                        isLoggedIn = true,
+            val userInfo = getUserInfo()
+            if (userInfo != null) {
+                val localUser = userDao.getUserByUsernameAndType(username=username, accountType = AccountType.CLASSIC)
+                if (localUser != null) {
+                    userDao.updateUser(localUser.copy(
+                        userName = userInfo.userName,
+                        email = userInfo.email,
+                        emailVerified = userInfo.emailVerified,
+                        isLoggedIn = true
+                    ))
+                } else {
+                    userDao.insertUser(
+                        User(
+                            email = userInfo.email,
+                            userName = userInfo.userName,
+                            emailVerified = userInfo.emailVerified,
+                            isLoggedIn = true,
+                            accountType = AccountType.CLASSIC
+                        )
                     )
-                )
+                }
             }
             true
         } catch (e: Exception) {
@@ -64,6 +85,7 @@ class UserRepository(context: Context){
             false
         }
     }
+
 
     suspend fun loginWithGoogle(idToken: String): Boolean {
         return try {
@@ -77,7 +99,7 @@ class UserRepository(context: Context){
             val response = api.loginWithGoogle(GoogleLoginRequest(idToken))
             tokenManager.saveToken(response.token)
 
-            val localUser = userDao.getUserByUsername(username)
+            val localUser = userDao.getUserByUsernameAndType(username = username, accountType = AccountType.GOOGLE)
             if (localUser != null) {
                 userDao.updateUser(localUser.copy(isLoggedIn = true))
             } else {
@@ -85,7 +107,9 @@ class UserRepository(context: Context){
                     User(
                         email = email,
                         userName = username,
-                        isLoggedIn = true
+                        isLoggedIn = true,
+                        emailVerified = true,
+                        accountType = AccountType.GOOGLE
                     )
                 )
             }
@@ -107,7 +131,8 @@ class UserRepository(context: Context){
 
                 email = null,
                 userName = username,
-                isLoggedIn = true
+                isLoggedIn = true,
+                accountType = AccountType.CLASSIC
             ))
             true
         }catch (e: Exception){
@@ -210,6 +235,8 @@ class UserRepository(context: Context){
             api.verifyEmail(VerifyEmailRequest(
                 code = code
             ))
+            val user = userDao.getLoggedInUser()
+            userDao.updateUser(user!!.copy(emailVerified = true))
             true
         }catch (e: Exception){
             Log.e("UserRepository", "Verify Email failed: ${e.message}")
