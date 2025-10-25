@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import com.example.gymappfrontendui.db.AppDb
 import com.example.gymappfrontendui.db.entity.Set
 import com.example.gymappfrontendui.db.dto.WorkoutSetWithDate
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -41,6 +42,7 @@ class SetRepository(context: Context) {
     fun getSetByWorkoutExerciseId(workoutExerciseId: Int): Flow<List<Set>> {
         return setDao.getSetByWorkoutExerciseId(workoutExerciseId)
     }
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun getWorkoutSetsWithDateForExercise(exerciseId: Int): Flow<List<WorkoutSetWithDate>> {
         return userDao.getLoggedInUserIdFlow().flatMapLatest { loggedInUserId: Int? ->
             val userId: Int? = loggedInUserId ?: userDao.getGuestUserId()

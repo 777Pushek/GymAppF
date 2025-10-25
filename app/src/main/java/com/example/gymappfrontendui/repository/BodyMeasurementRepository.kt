@@ -5,11 +5,9 @@ import com.example.gymappfrontendui.db.AppDb
 import com.example.gymappfrontendui.db.entity.BodyMeasurement
 import com.example.gymappfrontendui.db.entity.SyncQueue
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi // Potrzebny do flatMapLatest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.firstOrNull // Zachowujemy dla getUserID
-import kotlinx.coroutines.flow.flatMapLatest // Potrzebny do reaktywności
-import kotlinx.coroutines.flow.flowOf // Potrzebny dla pustej listy
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -23,11 +21,8 @@ class BodyMeasurementRepository(context: Context) {
     fun getAvailableBodyMeasurements(): Flow<List<BodyMeasurement>> {
         return userDao.getLoggedInUserIdFlow().flatMapLatest { loggedInUserId ->
             val userId = loggedInUserId ?: userDao.getGuestUserId()
-            if (userId == null) {
-                flowOf(emptyList())
-            } else {
-                bodyMeasurementDao.getAvailableBodyMeasurements(userId)
-            }
+            bodyMeasurementDao.getAvailableBodyMeasurements(userId)
+
         }
     }
 
