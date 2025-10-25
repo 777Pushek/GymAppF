@@ -17,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.gymappfrontendui.screens.BodyMeasurementProgressScreen
 import com.example.gymappfrontendui.screens.BodyMeasurementsScreen
 import com.example.gymappfrontendui.screens.EditWorkoutHistoryScreen
 import com.example.gymappfrontendui.screens.LoginScreen
@@ -81,6 +82,9 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(Routes.WorkoutProgressScreen) {
                             WorkoutProgressScreen(navController = navController)
+                        }
+                        composable(Routes.BodyMeasurementProgressScreen) {
+                            BodyMeasurementProgressScreen(navController = navController)
                         }
                     }
                 }

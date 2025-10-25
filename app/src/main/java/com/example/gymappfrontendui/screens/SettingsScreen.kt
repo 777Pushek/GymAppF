@@ -69,6 +69,15 @@ fun ProfileScreen(
                 onClick = { navController.navigate(Routes.BodyMeasurementsScreen) }
             )
         }
+        // --- NOWA POZYCJA MENU ---
+        item {
+            SettingsOptionItem(
+                icon = Icons.Default.AccountCircle, // Nowa ikona
+                text = "Measurement Progress",
+                onClick = { navController.navigate(Routes.BodyMeasurementProgressScreen) } // Nawiguj do nowego ekranu
+            )
+        }
+        // --- KONIEC NOWEJ POZYCJI ---
         item {
             SettingsOptionItem(
                 icon = Icons.Default.DateRange,

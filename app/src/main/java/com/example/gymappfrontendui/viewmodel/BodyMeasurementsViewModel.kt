@@ -104,6 +104,39 @@ class BodyMeasurementsViewModel(app: Application) : AndroidViewModel(app) {
     fun updateArm(value: String) { _state.update { it.copy(arm = value, saveSuccess = false) } }
     fun updateHips(value: String) { _state.update { it.copy(hips = value, saveSuccess = false) } }
 
+    fun goToNextDay() {
+        changeDate(1)
+    }
+
+    fun goToPreviousDay() {
+        changeDate(-1)
+    }
+    fun selectDate(selectedDate: LocalDate) {
+        viewModelScope.launch {
+            if (selectedDate.isAfter(LocalDate.now())) {
+                _state.update { it.copy(error = "Cannot select future dates") }
+                return@launch
+            }
+            loadMeasurementsForDate(selectedDate)
+        }
+    }
+    private fun changeDate(daysToAdd: Long) {
+        viewModelScope.launch {
+            try {
+                val currentDate = LocalDate.parse(_state.value.isoDate, isoDateFormatter)
+                val newDate = currentDate.plusDays(daysToAdd)
+                if (newDate.isAfter(LocalDate.now())) {
+                    _state.update { it.copy(error = "Cannot select future dates") }
+                    return@launch
+                }
+                loadMeasurementsForDate(newDate)
+
+            } catch (e: Exception) {
+                Log.e("BodyMeasurementsVM", "Error changing date", e)
+                _state.update { it.copy(error = "Error changing date.") }
+            }
+        }
+    }
     fun saveMeasurements() {
         viewModelScope.launch {
             val currentState = _state.value

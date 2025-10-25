@@ -19,7 +19,7 @@ import java.util.Locale
 import kotlin.math.max
 
 enum class DateRangeFilter {
-    MONTH_1, MONTH_3, MONTH_6, YEAR_1, ALL_TIME
+    MONTH_1, MONTH_3, MONTH_6, YEAR_1, ALL_TIME, CUSTOM
 }
 
 data class WorkoutProgressState(
@@ -194,6 +194,7 @@ class WorkoutProgressViewModel(application: Application) : AndroidViewModel(appl
             DateRangeFilter.MONTH_6 -> today.minusMonths(6)
             DateRangeFilter.YEAR_1 -> today.minusYears(1)
             DateRangeFilter.ALL_TIME -> LocalDate.MIN
+            else -> LocalDate.MIN
         }
 
         return try {

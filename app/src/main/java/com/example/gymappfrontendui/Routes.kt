@@ -17,5 +17,6 @@ object Routes {
 
     var WorkoutProgressScreen = "workout_progress"
 
-
+    var BodyMeasurementProgressScreen = "body_measurement_progress"
 }
+

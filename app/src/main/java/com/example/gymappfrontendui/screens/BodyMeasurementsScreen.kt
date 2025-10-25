@@ -1,26 +1,31 @@
 package com.example.gymappfrontendui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.gymappfrontendui.viewmodel.BodyMeasurementsViewModel
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
+import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,11 +34,49 @@ fun BodyMeasurementsScreen(
     viewModel: BodyMeasurementsViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
-    val focusManager = LocalFocusManager.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    val currentMillis = remember(state.isoDate) {
+        try {
+            LocalDate.parse(state.isoDate, DateTimeFormatter.ISO_LOCAL_DATE)
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli()
+        } catch (e: Exception) {
+            Instant.now().toEpochMilli()
+        }
+    }
+
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = currentMillis,
+        yearRange = IntRange(LocalDate.now().year - 5, LocalDate.now().year),
+
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                return utcTimeMillis <= Instant.now().toEpochMilli()
+            }
+            override fun isSelectableYear(year: Int): Boolean {
+                return year <= LocalDate.now().year
+            }
+        }
+    )
+
+    LaunchedEffect(state.error) {
+        state.error?.let {
+            scope.launch {
+                snackbarHostState.showSnackbar(it)
+            }
+        }
+    }
 
     LaunchedEffect(state.saveSuccess) {
         if (state.saveSuccess) {
-            navController.popBackStack()
+            scope.launch {
+                snackbarHostState.showSnackbar("Measurements saved successfully!")
+            }
         }
     }
 
@@ -42,7 +85,7 @@ fun BodyMeasurementsScreen(
             TopAppBar(
                 title = { Text("Body Measurements") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -52,135 +95,184 @@ fun BodyMeasurementsScreen(
                 )
             )
         },
-        bottomBar = {
-            Surface(shadowElevation = 8.dp) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-                        .padding(WindowInsets.navigationBars.asPaddingValues())
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton(onClick = { navController.popBackStack() }) {
-                        Text("Cancel")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        if (showDatePicker) {
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
                     Button(
                         onClick = {
-                            focusManager.clearFocus()
-                            viewModel.saveMeasurements()
-                        },
-                        enabled = !state.isLoading && state.error?.contains("User not found") != true
-                    ) {
-                        Text("Save Measurements")
-                    }
+                            showDatePicker = false
+                            val selectedMillis = datePickerState.selectedDateMillis
+                            if (selectedMillis != null) {
+                                val selectedDate = Instant.ofEpochMilli(selectedMillis)
+                                    .atZone(ZoneId.systemDefault())
+                                    .toLocalDate()
+                                viewModel.selectDate(selectedDate)
+                            }
+                        }
+                    ) { Text("OK") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
                 }
+            ) {
+                DatePicker(
+                    state = datePickerState
+                )
             }
         }
-    ) { paddingValues ->
-        Column(
+
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState())
         ) {
-            if (state.isLoading && state.measurementId == 0) {
-                Box(modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                Text(
-                    text = state.date.takeUnless { it.isBlank() } ?: "Loading date...",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier
-                        .padding(vertical = 16.dp)
-                        .fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    textAlign = TextAlign.Center
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                DateNavigator(
+                    date = state.date,
+                    onPrevious = { viewModel.goToPreviousDay() },
+                    onNext = { viewModel.goToNextDay() },
+                    onDateClick = { showDatePicker = true },
+                    isNextEnabled = state.isoDate != LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
                 )
 
-                if (state.error != null) {
-                    Text(
-                        text = state.error ?: "An unknown error occurred.",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier
-                            .padding(bottom = 8.dp)
-                            .fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
-                }
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    MeasurementRow(label = "Weight", unit = "kg", value = state.weight, onValueChange = viewModel::updateWeight, imeAction = ImeAction.Next)
-                    MeasurementRow(label = "Waist", unit = "cm", value = state.waist, onValueChange = viewModel::updateWaist, imeAction = ImeAction.Next)
-                    MeasurementRow(label = "Chest", unit = "cm", value = state.chest, onValueChange = viewModel::updateChest, imeAction = ImeAction.Next)
-                    MeasurementRow(label = "Hips", unit = "cm", value = state.hips, onValueChange = viewModel::updateHips, imeAction = ImeAction.Next)
-                    MeasurementRow(label = "Arm", unit = "cm", value = state.arm, onValueChange = viewModel::updateArm, imeAction = ImeAction.Next)
-                    MeasurementRow(label = "Forearm", unit = "cm", value = state.forearm, onValueChange = viewModel::updateForearm, imeAction = ImeAction.Next)
-                    MeasurementRow(label = "Thigh", unit = "cm", value = state.thigh, onValueChange = viewModel::updateThigh, imeAction = ImeAction.Next)
-                    MeasurementRow(label = "Calf", unit = "cm", value = state.calf, onValueChange = viewModel::updateCalf, imeAction = ImeAction.Done, isLastField = true)
-                }
+                MeasurementInputField(
+                    label = "Weight",
+                    unit = "kg",
+                    value = state.weight,
+                    onValueChange = viewModel::updateWeight,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                MeasurementInputField(
+                    label = "Waist",
+                    unit = "cm",
+                    value = state.waist,
+                    onValueChange = viewModel::updateWaist,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                MeasurementInputField(
+                    label = "Chest",
+                    unit = "cm",
+                    value = state.chest,
+                    onValueChange = viewModel::updateChest,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                MeasurementInputField(
+                    label = "Arm",
+                    unit = "cm",
+                    value = state.arm,
+                    onValueChange = viewModel::updateArm,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                MeasurementInputField(
+                    label = "Forearm",
+                    unit = "cm",
+                    value = state.forearm,
+                    onValueChange = viewModel::updateForearm,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                MeasurementInputField(
+                    label = "Thigh",
+                    unit = "cm",
+                    value = state.thigh,
+                    onValueChange = viewModel::updateThigh,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                MeasurementInputField(
+                    label = "Calf",
+                    unit = "cm",
+                    value = state.calf,
+                    onValueChange = viewModel::updateCalf,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                MeasurementInputField(
+                    label = "Hips",
+                    unit = "cm",
+                    value = state.hips,
+                    onValueChange = viewModel::updateHips,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = { viewModel.saveMeasurements() },
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    enabled = !state.isLoading
+                ) {
+                    Text("Save Measurements")
+                }
+            }
+
+            if (state.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
     }
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MeasurementRow(
+private fun DateNavigator(
+    date: String,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onDateClick: () -> Unit,
+    isNextEnabled: Boolean
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        IconButton(onClick = onPrevious) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Previous Day")
+        }
+
+        Row(
+            modifier = Modifier.clickable(onClick = onDateClick),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(Icons.Default.DateRange, contentDescription = "Select Date")
+            Text(
+                text = date.ifEmpty { "Loading..." },
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        IconButton(onClick = onNext, enabled = isNextEnabled) {
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Next Day")
+        }
+    }
+}
+@Composable
+private fun MeasurementInputField(
     label: String,
     unit: String,
     value: String,
     onValueChange: (String) -> Unit,
-    imeAction: ImeAction,
-    isLastField: Boolean = false
+    modifier: Modifier = Modifier
 ) {
-    val focusManager = LocalFocusManager.current
-
-    Column {
-        ListItem(
-            headlineContent = { Text(label, style = MaterialTheme.typography.bodyLarge) },
-            trailingContent = {
-                OutlinedTextField(
-                    value = value,
-                    onValueChange = { newValue ->
-                        if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*\$"))) {
-                            onValueChange(newValue)
-                        }
-                    },
-                    modifier = Modifier.widthIn(min = 80.dp, max = 120.dp),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Decimal,
-                        imeAction = imeAction
-                    ),
-                    keyboardActions = KeyboardActions(onDone = {
-                        if (isLastField) focusManager.clearFocus()
-                    }),
-                    singleLine = true,
-                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
-                    shape = RoundedCornerShape(8.dp),
-                    suffix = { Text(unit, style = MaterialTheme.typography.labelSmall) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                    ),
-                )
-            },
-            colors = ListItemDefaults.colors(
-                containerColor = androidx.compose.ui.graphics.Color.Transparent
-            ),
-            modifier = Modifier
-                .height(IntrinsicSize.Min)
-                .padding(vertical = 4.dp)
-        )
-        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
-    }
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        suffix = { Text(unit) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        singleLine = true,
+        modifier = modifier
+    )
 }

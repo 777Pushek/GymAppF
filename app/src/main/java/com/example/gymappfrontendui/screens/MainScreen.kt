@@ -10,8 +10,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,14 +36,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.gymappfrontendui.screens.NavItem
 import com.example.gymappfrontendui.viewmodel.LoginRegistryViewModel
 import com.example.gymappfrontendui.viewmodel.ExercisesViewModel
 import com.example.gymappfrontendui.viewmodel.WorkoutUiState
 import com.example.gymappfrontendui.viewmodel.WorkoutViewModel
 import androidx.compose.material3.AlertDialog
 import com.example.gymappfrontendui.viewmodel.HistoryViewModel
-
+import androidx.compose.runtime.saveable.rememberSaveable
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -76,7 +73,7 @@ fun MainScreen(navController: NavController, modifier: Modifier = Modifier, logi
             icon = Icons.Default.Menu,
         ),
     )
-    var selectedIndex by remember {
+    var selectedIndex by rememberSaveable {
         mutableIntStateOf(0)
     }
     var exerciseAddRequested by remember { mutableStateOf(false) }
