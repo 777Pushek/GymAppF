@@ -43,4 +43,7 @@ interface WeekScheduleDao {
     @Query("SELECT COUNT(*) > 0 FROM week_schedules WHERE user_id = :userId")
     suspend fun hasWeekSchedulesForUser(userId: Int): Boolean
 
+    @Query("UPDATE week_schedules SET selected = 0 WHERE user_id = :userId")
+    suspend fun clearSelectedForUser(userId: Int)
+
 }

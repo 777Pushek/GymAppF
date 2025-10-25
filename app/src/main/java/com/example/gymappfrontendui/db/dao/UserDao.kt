@@ -85,9 +85,5 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE user_id = :id")
     fun getUserWithExercisesAndSetsById(id: Int): Flow<UserWithExercisesAndSets>
 
-    @Query("SELECT selected_week_schedule_id FROM users WHERE isLoggedIn = 1 LIMIT 1")
-    suspend fun getSelectedWeekScheduleId(): Int?
 
-    @Query("UPDATE users SET selected_week_schedule_id = :selectedLocalId WHERE isLoggedIn = 1")
-    suspend fun updateSelectedWeekScheduleId(selectedLocalId: Int?)
 }

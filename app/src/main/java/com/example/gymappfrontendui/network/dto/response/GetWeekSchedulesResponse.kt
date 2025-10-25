@@ -1,5 +1,7 @@
 package com.example.gymappfrontendui.network.dto.response
 
+import com.example.gymappfrontendui.models.DayOfWeek
+import com.example.gymappfrontendui.models.NotificationTime
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
@@ -22,6 +24,8 @@ data class WeekScheduleResponse(
     val name: String,
     @Json(name = "selected")
     val selected: Boolean,
+    @Json(name = "norification_time")
+    val norificationTime: NotificationTime,
     @Json(name = "scheduleWorkouts")
     val scheduleWorkouts: List<ScheduleWorkoutResponse>
 )
@@ -33,7 +37,7 @@ data class ScheduleWorkoutResponse(
     @Json(name = "workout_template_id")
     val workoutTemplateId: Int,
     @Json(name = "day")
-    val day: String,
+    val day: DayOfWeek,
     @Json(name = "time")
     val time: String?
 )

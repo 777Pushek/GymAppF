@@ -13,7 +13,6 @@ data class User (
     @ColumnInfo(name = "isLoggedIn") val isLoggedIn: Boolean = false,
     @ColumnInfo(name = "last_sync") val lastSync: String? = null,
     @ColumnInfo(name = "isGuest") val isGuest: Boolean = false,
-    @ColumnInfo(name = "selected_week_schedule_id") val selectedWeekScheduleId: Int? = null
 
 )
 
