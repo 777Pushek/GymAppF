@@ -68,4 +68,7 @@ interface ExerciseDao {
     @Query("SELECT * FROM exercises WHERE user_id = :userId OR user_id IS NULL")
     fun getAvailableExercisesWithWorkoutTemplates(userId: Int?): Flow<List<ExerciseWithWorkoutTemplates>>
 
+    @Query("SELECT COUNT(*) > 0 FROM exercises WHERE user_id = :userId")
+    suspend fun hasExercisesForUser(userId: Int): Boolean
+
 }

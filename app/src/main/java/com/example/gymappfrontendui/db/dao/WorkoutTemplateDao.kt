@@ -59,5 +59,7 @@ interface WorkoutTemplateDao {
     @Transaction
     @Query("SELECT * FROM workout_templates WHERE user_id = :userId OR user_id IS NULL")
     fun getAvailableTemplatesWithWorkouts(userId: Int?): Flow<List<WorkoutTemplateWithWorkouts>>
+    @Query("SELECT COUNT(*) > 0 FROM workout_templates WHERE user_id = :userId")
+    suspend fun hasWorkoutTemplatesForUser(userId: Int): Boolean
 
 }

@@ -34,4 +34,6 @@ interface BodyMeasurementDao {
 
     @Query("DELETE FROM body_measurements WHERE global_id = :id")
     suspend fun deleteBodyMeasurementByGlobalId(id: Int)
+    @Query("SELECT COUNT(*) > 0 FROM body_measurements WHERE user_id = :userId")
+    suspend fun hasBodyMeasurementsForUser(userId: Int): Boolean
 }

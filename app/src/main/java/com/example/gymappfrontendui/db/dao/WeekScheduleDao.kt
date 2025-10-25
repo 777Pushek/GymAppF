@@ -40,5 +40,7 @@ interface WeekScheduleDao {
     @Transaction
     @Query("SELECT * FROM week_schedules WHERE user_id = :userId")
     fun getWeekSchedulesWithScheduleWorkouts(userId: Int): Flow<List<WeekScheduleWithScheduledWorkouts>>
+    @Query("SELECT COUNT(*) > 0 FROM week_schedules WHERE user_id = :userId")
+    suspend fun hasWeekSchedulesForUser(userId: Int): Boolean
 
 }

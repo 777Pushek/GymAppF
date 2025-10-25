@@ -28,7 +28,8 @@ interface SyncQueueDao {
 
     @Query("SELECT * FROM sync_queue WHERE local_id = :id AND table_name = :tn LIMIT 1")
     suspend fun getSyncQueueByTableName(id: Int?, tn: String): SyncQueue?
-
+    @Query("SELECT COUNT(*) > 0 FROM sync_queue WHERE user_id = :userId")
+    suspend fun hasSyncQueuesForUser(userId: Int): Boolean
 
 
 }

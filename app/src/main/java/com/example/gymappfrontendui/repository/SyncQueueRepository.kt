@@ -71,6 +71,19 @@ class SyncQueueRepository(context: Context) {
         }
 
     }
+    suspend fun hasGuestData(): Boolean {
+        val guestId = userDao.getGuestUserId()
+
+        val hasExercises = exerciseDao.hasExercisesForUser(guestId)
+        val hasWorkouts = workoutDao.hasWorkoutsForUser(guestId)
+        val hasBodyMeasurements = bodyMeasurementDao.hasBodyMeasurementsForUser(guestId)
+        val hasTemplates = workoutTemplateDao.hasWorkoutTemplatesForUser(guestId)
+        val hasWeekSchedules = weekScheduleDao.hasWeekSchedulesForUser(guestId)
+        val hasSyncQueue = syncQueueDao.hasSyncQueuesForUser(guestId)
+
+        return hasExercises || hasWorkouts || hasBodyMeasurements ||
+                hasTemplates || hasWeekSchedules || hasSyncQueue
+    }
 
     private suspend fun assignSyncQueueToUser() {
         // Mikołaj spytaj użytkownika czy chce do danego konta przypisać zmiany na gościu
