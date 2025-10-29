@@ -8,13 +8,16 @@ import com.example.gymappfrontendui.db.entity.WeekSchedule
 import com.example.gymappfrontendui.db.entity.WorkoutTemplate
 import com.example.gymappfrontendui.models.NotificationTime
 import com.example.gymappfrontendui.models.DayOfWeek
+import com.example.gymappfrontendui.notifications.WorkoutAlarmScheduler
 import com.example.gymappfrontendui.repository.ScheduledWorkoutRepository
 import com.example.gymappfrontendui.repository.UserRepository
 import com.example.gymappfrontendui.repository.WeekScheduleRepository
 import com.example.gymappfrontendui.repository.WorkoutTemplateRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -114,6 +117,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
     fun deleteSchedule(schedule: WeekSchedule) {
         viewModelScope.launch {
             weekScheduleRepository.deleteWeekSchedule(schedule)
+            withContext(Dispatchers.IO) {
+                WorkoutAlarmScheduler.scheduleNextWorkoutAlarm(getApplication())
+            }
         }
     }
 
@@ -127,6 +133,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
                 if (schedule.selected != shouldBeSelected) {
                     weekScheduleRepository.updateWeekSchedule(schedule.copy(selected = shouldBeSelected))
                 }
+            }
+            withContext(Dispatchers.IO) {
+                WorkoutAlarmScheduler.scheduleNextWorkoutAlarm(getApplication())
             }
         }
     }
@@ -147,6 +156,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
             )
             scheduledWorkoutRepository.insertScheduledWorkout(scheduledWorkout)
             loadScheduleDetails(scheduleId)
+            withContext(Dispatchers.IO) {
+                WorkoutAlarmScheduler.scheduleNextWorkoutAlarm(getApplication())
+            }
         }
     }
 
@@ -154,6 +166,9 @@ class ScheduleViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch {
             scheduledWorkoutRepository.deleteScheduledWorkout(scheduledWorkout)
             loadScheduleDetails(scheduledWorkout.weekScheduleId)
+            withContext(Dispatchers.IO) {
+                WorkoutAlarmScheduler.scheduleNextWorkoutAlarm(getApplication())
+            }
         }
     }
 }

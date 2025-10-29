@@ -45,7 +45,7 @@ interface WeekScheduleDao {
 
     @Query("UPDATE week_schedules SET selected = 0 WHERE user_id = :userId")
     suspend fun clearSelectedForUser(userId: Int)
-    @Query("SELECT * FROM week_schedules WHERE selected = 1 LIMIT 1")
-    suspend fun getSelectedSchedule(): WeekSchedule?
+    @Query("SELECT * FROM week_schedules WHERE selected = 1 AND user_id = :userId LIMIT 1")
+    suspend fun getSelectedScheduleForUser(userId: Int): WeekSchedule?
 
 }

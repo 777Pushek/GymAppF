@@ -2,6 +2,7 @@ package com.example.gymappfrontendui.viewmodel
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gymappfrontendui.db.dao.UserDao
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.example.gymappfrontendui.db.entity.User
 import com.example.gymappfrontendui.repository.SyncQueueRepository
+import com.example.gymappfrontendui.util.SyncManager
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -48,6 +50,11 @@ class LoginRegistryViewModel(app: Application): AndroidViewModel(app) {
             val success = userRepository.loginWithGoogle(idToken)
             if (success) {
                 setAppHasBeenOpened()
+                try {
+                    SyncManager.syncNow(getApplication<Application>().applicationContext)
+                } catch (e: Exception) {
+                    Log.e("LoginViewModel", "Sync after login failed: ${e.message}")
+                }
             }
             onResult(success)
         }
@@ -78,6 +85,11 @@ class LoginRegistryViewModel(app: Application): AndroidViewModel(app) {
             val success = userRepository.login(username, password)
             if (success) {
                 setAppHasBeenOpened()
+                try {
+                    SyncManager.syncNow(getApplication<Application>().applicationContext)
+                } catch (e: Exception) {
+                    Log.e("LoginViewModel", "Sync after login failed: ${e.message}")
+                }
             }
             onLoginResult(success)
         }

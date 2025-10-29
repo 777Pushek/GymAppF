@@ -2,9 +2,12 @@ package com.example.gymappfrontendui
 
 import android.app.Application
 import android.util.Log
-import com.example.gymappfrontendui.notifications.ReminderSetup
+import com.example.gymappfrontendui.notifications.WorkoutAlarmScheduler
 import com.example.gymappfrontendui.util.ConnectivityListener
 import com.example.gymappfrontendui.util.SyncManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class GymApp : Application() {
     private var connectivityListener: ConnectivityListener? = null
@@ -14,13 +17,14 @@ class GymApp : Application() {
         Log.d("GymApp", "App started, initializing background sync...")
         val appCtx = applicationContext
 
-        ReminderSetup.scheduleDailyCheck(appCtx)
         SyncManager.schedulePeriodicSync(appCtx)
+        SyncManager.syncNow(appCtx)
 
         connectivityListener = ConnectivityListener(appCtx)
         connectivityListener?.start()
-
-        SyncManager.syncNow(appCtx)
+        CoroutineScope(Dispatchers.IO).launch {
+            WorkoutAlarmScheduler.scheduleNextWorkoutAlarm(appCtx)
+        }
     }
 
     override fun onTerminate() {
