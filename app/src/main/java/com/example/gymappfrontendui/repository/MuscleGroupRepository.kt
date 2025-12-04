@@ -16,11 +16,6 @@ class MuscleGroupRepository(context: Context) {
         newId
     }
 
-    suspend fun insertMuscleGroups(muscleGroups: List<MuscleGroup>): List<Long> = withContext(Dispatchers.IO){
-        val newId = muscleGroupDao.insertMuscleGroups(muscleGroups)
-        newId
-    }
-
     suspend fun updateMuscleGroup(muscleGroup: MuscleGroup) = withContext(Dispatchers.IO){
         muscleGroupDao.updateMuscleGroup(muscleGroup)
 

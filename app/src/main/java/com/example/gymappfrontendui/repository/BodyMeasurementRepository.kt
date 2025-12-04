@@ -30,18 +30,6 @@ class BodyMeasurementRepository(context: Context) {
         return bodyMeasurementDao.getBodyMeasurementById(id)
     }
 
-    suspend fun insertBodyMeasurements(bodyMeasurements: List<BodyMeasurement>): List<Long> = withContext(Dispatchers.IO) {
-        val newIds = bodyMeasurementDao.insertBodyMeasurements(bodyMeasurements)
-        newIds.zip(bodyMeasurements).forEach { (newId, measurement) ->
-            val q = SyncQueue(
-                tableName = "body_measurements",
-                localId = newId.toInt(),
-                userId = measurement.userId
-            )
-            syncQueueDao.insertSyncQueue(q)
-        }
-        newIds
-    }
 
     suspend fun insertBodyMeasurement(bodyMeasurement: BodyMeasurement): Long = withContext(Dispatchers.IO) {
         val newId = bodyMeasurementDao.insertBodyMeasurement(bodyMeasurement)

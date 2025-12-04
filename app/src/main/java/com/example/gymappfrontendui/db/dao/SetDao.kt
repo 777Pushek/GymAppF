@@ -33,15 +33,6 @@ interface SetDao {
     @Query("SELECT * FROM sets WHERE workout_exercise_id = :workoutExerciseId ORDER BY position ASC") // Added ORDER BY
     fun getSetByWorkoutExerciseId(workoutExerciseId: Int): Flow<List<Set>>
 
-    @Query("""
-        SELECT s.*, w.date as workoutDate
-        FROM sets s
-        INNER JOIN workout_exercises we ON s.workout_exercise_id = we.workout_exercise_id
-        INNER JOIN workouts w ON we.workout_id = w.workout_id
-        WHERE we.exercise_id = :exerciseId AND w.user_id = :userId
-        ORDER BY w.date ASC, s.position ASC
-    """)
-    fun getWorkoutSetsWithDateForExerciseAndUser(exerciseId: Int, userId: Int): Flow<List<WorkoutSetWithDate>>
 
     @Transaction
     @Query("SELECT * FROM workouts WHERE user_id = :userId")

@@ -41,33 +41,7 @@ class ExerciseRepository(context: Context) {
         }
         newId
     }
-    suspend fun insertExercisesWithGroups(exerciseToMuscleMap: Map<Exercise, List<Int>>): List<Long> = withContext(Dispatchers.IO) {
-        val userId = userDao.getLoggedInUserId() ?: userDao.getGuestUserId()
-        val insertedIds = mutableListOf<Long>()
 
-        exerciseToMuscleMap.forEach { (exercise, muscleIds) ->
-            val newId = exerciseDao.insertExercise(exercise.copy(userId = userId))
-            insertedIds.add(newId)
-
-            val q = SyncQueue(
-                tableName = "exercises",
-                localId = newId.toInt(),
-                userId = userId
-            )
-            syncQueueDao.insertSyncQueue(q)
-
-            muscleIds.forEach { mgId ->
-                exerciseMuscleGroupDao.insertExerciseMuscleGroup(
-                    ExerciseMuscleGroup(
-                        exerciseId = newId.toInt(),
-                        muscleGroupId = mgId
-                    )
-                )
-            }
-        }
-
-        insertedIds
-    }
 
 
     suspend fun updateExercise(exercise: Exercise) = withContext(Dispatchers.IO){

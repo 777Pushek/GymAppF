@@ -22,11 +22,6 @@ class SetRepository(context: Context) {
         newId
     }
 
-    suspend fun insertSets(sets: List<Set>): List<Long> = withContext(Dispatchers.IO){
-        val newId = setDao.insertSets(sets)
-        newId
-    }
-
     suspend fun updateSet(set: Set) = withContext(Dispatchers.IO){
         setDao.updateSet(set)
     }

@@ -15,11 +15,6 @@ class ScheduledWorkoutRepository(context: Context) {
         newId
     }
 
-    suspend fun insertScheduledWorkouts(scheduledWorkouts: List<ScheduledWorkout>): List<Long>  = withContext(Dispatchers.IO){
-        val newId = scheduledWorkoutDao.insertScheduledWorkouts(scheduledWorkouts)
-        newId
-    }
-
     suspend fun updateScheduledWorkout(scheduledWorkout: ScheduledWorkout)  = withContext(Dispatchers.IO){
         scheduledWorkoutDao.updateScheduledWorkout(scheduledWorkout)
     }

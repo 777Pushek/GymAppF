@@ -27,21 +27,6 @@ class WeekScheduleRepository(context: Context) {
         newId
     }
 
-    suspend fun insertWeekSchedules(weekSchedules: List<WeekSchedule>): List<Long> = withContext(Dispatchers.IO){
-        val userId = userDao.getLoggedInUserId() ?: userDao.getGuestUserId()
-        val newId = weekScheduleDao.insertWeekSchedules(weekSchedules.map { it.copy(userId = userId) })
-
-        for(i in newId){
-            val q = SyncQueue(
-                tableName = "week_schedules",
-                localId = i.toInt(),
-                userId = userId
-            )
-            syncQueueDao.insertSyncQueue(q)
-        }
-        newId
-    }
-
     suspend fun updateWeekSchedule(weekSchedule: WeekSchedule) = withContext(Dispatchers.IO){
         val userId = userDao.getLoggedInUserId() ?: userDao.getGuestUserId()
         weekScheduleDao.updateWeekSchedule(weekSchedule.copy(userId = userId))

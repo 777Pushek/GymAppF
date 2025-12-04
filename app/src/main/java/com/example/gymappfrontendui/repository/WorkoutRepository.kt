@@ -35,20 +35,6 @@ class WorkoutRepository(context: Context) {
         newId
     }
 
-    suspend fun insertAllWorkouts(workouts: List<Workout>): List<Long> = withContext(Dispatchers.IO){
-        val userId = userDao.getLoggedInUserId() ?: userDao.getGuestUserId()
-        val newId = workoutDao.insertAllWorkouts(workouts.map { it.copy(userId = userId) })
-
-        for(i in newId){
-            val q = SyncQueue(
-                tableName = "workouts",
-                localId = i.toInt(),
-                userId = userId
-            )
-            syncQueueDao.insertSyncQueue(q)
-        }
-        newId
-    }
 
     suspend fun updateWorkout(workout: Workout) = withContext(Dispatchers.IO){
         val userId = userDao.getLoggedInUserId() ?: userDao.getGuestUserId()
